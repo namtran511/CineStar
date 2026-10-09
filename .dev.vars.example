@@ -1,0 +1,4 @@
+# Copy this file to .dev.vars for local Cloudflare/Vinext development.
+# Store the real key only in .dev.vars (ignored by Git) or hosting secrets.
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
