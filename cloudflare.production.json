@@ -3,6 +3,7 @@
   "main": "./build/sites-worker.js",
   "compatibility_date": "2026-05-15",
   "compatibility_flags": ["nodejs_compat"],
+  "keep_vars": true,
   "vars": { "APP_ENV": "production", "GEMINI_MODEL": "gemini-2.5-flash" },
   "d1_databases": [{
     "binding": "DB",
