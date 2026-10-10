@@ -7,12 +7,24 @@ Website tiếng Việt với giao diện tối, ba vai trò, dữ liệu lưu tr
 | Vai trò | Chức năng |
 | --- | --- |
 | Người dùng | Đăng ký/đăng nhập; tìm phim và lịch chiếu; xem thông tin phim; chọn ghế và combo; áp dụng ưu đãi; thanh toán giả lập; xem/hủy vé của mình; hỏi trợ lý phim |
-| Nhân viên | Tra cứu vé, kiểm tra và soát vé; bán vé tại quầy với chọn ghế/combo/thanh toán giả lập; chuyển sang giao diện khách hàng |
-| Admin | Thống kê doanh thu và vé; quản lý phim, phòng, suất chiếu, combo, ưu đãi; quản lý vai trò tài khoản; quản lý đơn vé |
+| Nhân viên | Tra cứu/soát vé, bán vé tại quầy; kiểm tra và giao quà/combo thành viên; tra cứu khách và sửa ngày sinh có lý do; chuyển sang giao diện khách hàng |
+| Admin | Báo cáo theo năm, lọc tháng/ngày, biểu đồ và đối chiếu kỳ trước; xuất Excel; BXH thành viên và phân tích Gemini; quản lý phim, phòng, suất chiếu, combo, ưu đãi; thêm/sửa/xóa tài khoản, sửa ngày sinh, xem điểm/hạng, giao quà; quản lý đơn vé |
+
+### Quy tắc bài toán báo cáo quản trị
+
+Số liệu là kết quả tổng hợp giao dịch, admin không nhập hoặc sửa trực tiếp doanh thu, số tiền hay số vé. Doanh thu tính số tiền đã lưu trên các đơn thanh toán/đã soát vé sau ưu đãi, gồm combo; đơn hủy không đóng góp vào doanh thu và vé bán, nhưng được thống kê riêng. Giá thay đổi trong danh mục không thay đổi tổng tiền đơn cũ. Hủy/soát vé phải qua quy tắc nghiệp vụ và chỉ làm thay đổi trạng thái hợp lệ.
+
+Phạm vi mặc định là năm hiện tại; admin lọc năm, tháng hoặc một ngày, theo múi giờ Việt Nam và ngày đặt vé. Kỳ đang diễn ra đối chiếu cùng thời lượng đã trôi qua của kỳ trước, kỳ đã kết thúc đối chiếu toàn kỳ. Báo cáo hỗ trợ biểu đồ đường/miền, cột, thanh ngang, tròn/vòng tròn; có bảng dữ liệu và file Excel nhiều trang với ô số thực sự, không phải CSV đổi đuôi.
+
+BXH thành viên xếp theo chi tiêu trong kỳ rồi số vé, chỉ gồm thành viên đang hoạt động. Điểm/hạng hiện tại được phân biệt với điểm phát sinh từ vé trong kỳ. Xóa tài khoản không xóa doanh thu lịch sử hoặc đánh giá phim.
+
+Gemini phân tích từng biểu đồ hoặc toàn báo cáo bằng số liệu máy chủ tổng hợp, không nhận thông tin nhận dạng cá nhân và không có quyền cập nhật dữ liệu. Giao diện phân biệt nhận xét Gemini với gợi ý cơ bản khi dịch vụ không khả dụng. Khách hàng và nhân viên không được gọi API báo cáo, xuất Excel hay phân tích nội bộ này.
 
 ## Công nghệ
 
-- React + TypeScript + Vinext (tương thích cấu trúc Next.js App Router), Vite.
+Các thay đổi nghiệp vụ được ghi nhật ký tự động bằng trigger SQL, với tài khoản thực hiện, thời gian, dữ liệu trước/sau và mã yêu cầu. Nhân viên không được tự cộng điểm; admin cộng điểm có lý do qua chức năng riêng, có chống gửi trùng và không làm tăng hạng tích lũy từ vé. Nhật ký chỉ admin được đọc, không có chức năng sửa/xóa; trigger chặn sửa, xóa và thay thế log. Nhật ký không bị xóa khi tài khoản nguồn ngừng hoạt động, không lưu mật khẩu hoặc token và không hồi tạo lịch sử trước khi tính năng được bật.
+
+- React + JavaScript + Vinext (tương thích cấu trúc Next.js App Router), Vite. Giao diện dùng `.jsx`, API và nghiệp vụ dùng `.js`.
 - API phía máy chủ chạy trên Cloudflare Workers; SQL SQLite qua Cloudflare D1.
 - Drizzle mô tả schema và tạo migration; API dùng câu lệnh SQL có tham số.
 - Phiên đăng nhập nằm trong cookie HttpOnly; mật khẩu băm PBKDF2 với salt; quyền được kiểm tra trên từng API.
@@ -27,9 +39,9 @@ flowchart LR
     B --> D[Bộ phân tích truy vấn AI]
     C --> E[Dữ liệu danh mục công khai]
     E --> D
-    D --> F[Gemini: trả JSON tiêu chí / ID phim]
+    D --> F[Gemini: suy luận và viết lời tư vấn]
     F --> G[Kiểm tra schema và ID]
-    G --> H[Tạo câu trả lời từ bản ghi CSDL]
+    G --> H[Thay tham chiếu thực tế bằng bản ghi CSDL]
     H --> A
 ```
 
@@ -123,9 +135,9 @@ Ghế được tính từ số hàng/cột của phòng (A1, A2…). Ràng buộ
 
 ## AI giới hạn trong CSDL
 
-`POST /api/ai` nhận một câu hỏi. Máy chủ lấy danh mục công khai hiện tại: phim, lịch chiếu, giá, combo và ưu đãi. Không gửi người dùng, đơn vé, mật khẩu hoặc báo cáo nội bộ cho Gemini.
+`POST /api/ai` nhận câu hỏi và tối đa 8 lượt trò chuyện gần nhất để hiểu câu hỏi tiếp nối. Máy chủ lấy danh mục công khai hiện tại: phim, lịch chiếu, phòng chiếu, giá, combo và ưu đãi. Không gửi bản ghi người dùng, đơn vé, mật khẩu hoặc báo cáo nội bộ cho Gemini. Lịch sử do khách gửi được giới hạn dung lượng, kiểm tra vai trò và coi là dữ liệu không đáng tin cậy.
 
-Gemini trả JSON theo schema: ý định, ID phim hợp lệ, thể loại, độ tuổi, ngân sách, ngày và buổi chiếu. Hệ thống kiểm tra JSON và đối chiếu ID/tiêu chí với dữ liệu thật. Văn bản và các thông tin thực tế hiển thị cho khách được tạo lại từ bản ghi CSDL. Vì vậy một tên phim/giá/suất chiếu do mô hình tự tạo không thể xuất hiện trong câu trả lời thông qua JSON không hợp lệ.
+Gemini tự suy luận về nhu cầu, tâm trạng và hoàn cảnh để viết lời tư vấn, giải thích lựa chọn và hỏi thêm nếu cần. JSON gồm lời tư vấn cùng ý định, ID phim, thể loại, độ tuổi, ngân sách, ngày và buổi chiếu để server kiểm tra. Phần lời khuyên có cách diễn đạt linh hoạt; tham chiếu thông tin phim, giờ/giá vé, combo và ưu đãi được server thay bằng bản ghi CSDL. ID giả, suất không phù hợp, phim không đúng phân loại tuổi hoặc ưu đãi đã tắt bị chặn. Nhận xét về mức độ phù hợp dựa trên thể loại/mô tả và không bảo đảm nội dung từng cảnh khi CSDL chưa có cảnh báo chi tiết.
 
 Không cho mô hình thực thi SQL. Câu hỏi ngoài phạm vi hoặc yêu cầu dữ liệu riêng tư bị từ chối. Nếu thiếu khóa, Gemini lỗi hoặc JSON không hợp lệ, hệ thống chuyển sang gợi ý có nhãn Demo.
 

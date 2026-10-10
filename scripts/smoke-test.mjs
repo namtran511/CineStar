@@ -14,7 +14,7 @@ async function call(path, { method = "GET", body, cookie = "" } = {}) {
   return { status: response.status, body: json, cookie: response.headers.get("set-cookie")?.split(";")[0], headers: response.headers };
 }
 async function login(email) { const result = await call("/api/auth/login", { method: "POST", body: { email, password: "Demo@123" } }); check(result.status === 200 && result.cookie, `Đăng nhập ${email}`); check(/HttpOnly/i.test(result.headers.get("set-cookie")) && /SameSite=Lax/i.test(result.headers.get("set-cookie")), "Session cookie có HttpOnly và SameSite"); return result; }
-async function register(label) { const result = await call("/api/auth/register", { method: "POST", body: { name: `Smoke ${label} ${stamp}`, email: `smoke-${label}-${stamp}@cineverse.test`, password: "SmokeTest@123", role: "admin" } }); check(result.status === 200 && result.body.user.role === "user", "Đăng ký luôn tạo người dùng thường"); cleanup.users.push(result.body.user.id); return result; }
+async function register(label) { const result = await call("/api/auth/register", { method: "POST", body: { name: `Smoke ${label} ${stamp}`, email: `smoke-${label}-${stamp}@cineverse.test`, password: "SmokeTest@123", role: "admin", birthDate: "2000-01-15" } }); check(result.status === 200 && result.body.user.role === "user", "Đăng ký luôn tạo người dùng thường"); cleanup.users.push(result.body.user.id); return result; }
 async function create(resource, data, cookie) { const result = await call(`/api/admin/${resource}`, { method: "POST", cookie, body: data }); const key = { movies: "movie", rooms: "room", showtimes: "showtime", combos: "combo", promotions: "promotion" }[resource]; check(result.status === 201 && result.body[key]?.id, `Admin tạo ${resource}`); cleanup[resource].push(result.body[key].id); return result.body[key]; }
 
 try {
@@ -30,7 +30,8 @@ try {
   check((await call("/api/bookings", { cookie: staff.cookie })).status === 200, "Nhân viên đọc danh sách vé để soát vé");
   const own = await register("one"); const other = await register("two");
   check((await call("/api/auth/me", { cookie: own.cookie })).body.user.id === own.body.user.id, "Session lưu danh tính đăng ký");
-  const movie = await create("movies", { ...bootstrap.body.movies.find(movie => movie.status === "now"), id: undefined, title: `Smoke Test ${stamp}`, duration: 90 }, admin.cookie);
+  const { rating: _rating, reviewCount: _reviewCount, ...movieFields } = bootstrap.body.movies.find(movie => movie.status === "now");
+  const movie = await create("movies", { ...movieFields, id: undefined, title: `Smoke Test ${stamp}`, duration: 90 }, admin.cookie);
   const room = await create("rooms", { name: `Smoke Room ${stamp}`, rows: 4, cols: 8, type: "Standard" }, admin.cookie);
   const showtime = await create("showtimes", { movieId: movie.id, roomId: room.id, startTime: new Date(Date.now() + 86400000).toISOString(), price: 44000, format: "2D · Test" }, admin.cookie);
   check((await call("/api/admin/showtimes", { method: "POST", cookie: admin.cookie, body: { ...showtime, id: undefined, startTime: new Date(Date.parse(showtime.startTime) + 30 * 60000).toISOString() } })).status === 409, "Admin không tạo lịch trùng phòng");
@@ -79,6 +80,7 @@ try {
   if (process.argv.includes("--cleanup-local-db") && existsSync(".sites-runtime/db-init.json")) {
     const ids = items => items.filter(id => /^[a-f0-9-]{36}$/.test(id)).map(id => `'${id}'`).join(",") || "''";
     const sql = [
+      `DELETE FROM membership_transactions WHERE user_id IN (${ids(cleanup.users)})`,
       `DELETE FROM booked_seats WHERE booking_id IN (SELECT id FROM bookings WHERE user_id IN (${ids(cleanup.users)}))`,
       `DELETE FROM bookings WHERE user_id IN (${ids(cleanup.users)})`,
       `DELETE FROM sessions WHERE user_id IN (${ids(cleanup.users)})`,

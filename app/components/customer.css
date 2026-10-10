@@ -41,6 +41,15 @@
 .cv-profile-menu > button { display: flex; align-items: center; width: 100%; gap: 10px; font-size: 12px; padding: 10px 8px; text-align: left; border-radius: 5px; }
 .cv-profile-menu > button:hover { background: #ffffff08; }
 .cv-hero { min-height: 596px; background-size: cover; background-position: center 38%; position: relative; overflow: hidden; }
+.cv-hero-backdrops, .cv-hero-backdrop { position: absolute; inset: 0; }
+.cv-hero-backdrop { width: 100%; height: 100%; object-fit: cover; object-position: center 38%; opacity: 0; transition: opacity 800ms ease; }
+.cv-hero-backdrop.active { opacity: 1; }
+.cv-app button.cv-hero-film { text-align: left; font-size: 17px; font-weight: 600; letter-spacing: -.3px; }
+@media (max-width: 680px) { .cv-app button.cv-hero-film { font-size: 15px; } }
+.cv-hero-control { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid #ffffff40 !important; border-radius: 50%; background: #10111780 !important; color: #fff !important; }
+.cv-hero-control:hover { background: #d65b3b !important; }
+.cv-hero-control:focus-visible { outline: 2px solid var(--cv-accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .cv-hero-backdrop { transition: none; } }
 .cv-hero-shade { position: absolute; inset: 0; background: linear-gradient(90deg, #0c0d11f7 0%, #0c0d11d6 27%, #0c0d1138 65%, #0c0d1129 100%), linear-gradient(0deg, #0c0d11 0%, #0c0d1110 35%, #0c0d1124 100%); }
 .cv-hero-content { width: min(1256px, calc(100% - 112px)); margin: 0 auto; position: relative; z-index: 1; padding: 73px 0 85px; }
 .cv-eyebrow { display: flex; align-items: center; gap: 10px; font-size: 9px; letter-spacing: 2.3px; font-weight: 600; color: #c6beb7; }
@@ -135,16 +144,6 @@
 .cv-experience-card h3 { font-size: 23px; font-weight: 550; letter-spacing: -.7px; margin-top: 17px; line-height: 1.3; }
 .cv-experience-link { display: flex; align-items: center; gap: 8px; color: #b5a59d; font-size: 10px; margin-top: 22px; }
 .cv-experience-card:hover .cv-experience-link { color: white; }
-.cv-footer { border-top: 1px solid #25252c; background: #090a0e; }
-.cv-footer-top { display: flex; justify-content: space-between; align-items: center; padding: 34px 0 31px; gap: 25px; }
-.cv-footer-top .cv-logo { font-size: 21px !important; }
-.cv-footer-top p { font-size: 10px; color: #74757f; margin-top: 10px; }
-.cv-footer-links { display: flex; gap: 29px; }
-.cv-footer-links > button { font-size: 10px; padding: 0; color: #9c9ca5; }
-.cv-footer-links > button:hover { color: white; }
-.cv-footer-bottom { display: flex; justify-content: space-between; align-items: center; gap: 15px; color: #595a66; font-size: 8px; padding: 19px 0 22px; border-top: 1px solid #1e1f25; }
-.cv-footer-bottom > span:nth-child(2) { display: flex; align-items: center; gap: 5px; }
-.cv-footer-bottom > span:last-child { font-size: 7px; letter-spacing: 1.5px; }
 .cv-inner-page { padding-top: 55px; padding-bottom: 75px; min-height: calc(100vh - 260px); }
 .cv-page-heading { margin-bottom: 40px; }
 .cv-page-heading h1 { font-size: 41px; font-weight: 600; letter-spacing: -1.6px; margin-top: 10px; line-height: 1.3; }
@@ -210,7 +209,6 @@
 .cv-spinner { width: 28px; height: 28px; margin: 0 auto; }
 .cv-spinner-small { width: 15px; height: 15px; border-top-color: #fff; }
 @keyframes cv-spin { to { transform: rotate(360deg); } }
-.cv-ai-page { padding-bottom: 65px; }
 .cv-ai-layout { display: grid; grid-template-columns: 288px minmax(0, 1fr); gap: 26px; }
 .cv-ai-sidebar { padding: 29px 25px; background: radial-gradient(ellipse at top, #3f293723, transparent 70%), #15151d; border: 1px solid #302a36; border-radius: 11px; }
 .cv-ai-orb { display: flex; align-items: center; justify-content: center; width: 82px; height: 82px; border: 1px solid #ff674d31; background: radial-gradient(circle, #ff674d22, #ff674d05); border-radius: 24px; color: var(--cv-accent); margin-bottom: 23px; box-shadow: 0 0 44px #ff674d0a; }
@@ -274,7 +272,8 @@
 .cv-ticket-info h2 { font-size: 22px; margin-top: 11px; letter-spacing: -.5px; font-weight: 600; }
 .cv-ticket-meta { display: flex; flex-wrap: wrap; gap: 11px 20px; margin-top: 12px; color: #90909e; font-size: 11px; }
 .cv-ticket-meta > span { display: flex; align-items: center; gap: 6px; }
-.cv-ticket-actions { display: flex; align-items: center; gap: 25px; margin-top: 23px; }
+.cv-ticket-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 25px; margin-top: 23px; }
+.cv-app .cv-tickets-review-link { margin-top: 18px; }
 .cv-cancel-link { color: #767582 !important; font-size: 10px !important; text-decoration: underline; padding: 0; }
 .cv-ticket-stub { border-left: 1px dashed #383942; width: 235px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 25px; color: #858391; gap: 9px; background: #191920; position: relative; }
 .cv-ticket-stub::before, .cv-ticket-stub::after { content: ""; position: absolute; width: 17px; height: 17px; left: -9px; background: var(--cv-bg); border-radius: 50%; }
@@ -289,6 +288,16 @@
 .cv-modal { position: relative; width: min(100%, 560px); max-height: calc(100dvh - 50px); overflow-y: auto; border: 1px solid #35343e; border-radius: 13px; background: #15151d; box-shadow: 0 30px 100px #0008; outline: none; }
 .cv-modal-wide { width: min(100%, 1000px); }
 .cv-modal-close { position: absolute; z-index: 5; top: 14px; right: 14px; border: 1px solid #ffffff15 !important; color: #a09ba9 !important; background: #11111b8a !important; backdrop-filter: blur(8px); }
+.cv-ai-modal { height: min(760px, calc(100dvh - 50px)); display: flex; flex-direction: column; padding: 28px; overflow: hidden; }
+.cv-ai-dialog-heading { flex-shrink: 0; padding-right: 32px; margin-bottom: 22px; }
+.cv-ai-dialog-heading h2 { font-size: 28px; font-weight: 600; letter-spacing: -.8px; margin-top: 7px; line-height: 1.35; }
+.cv-ai-dialog-heading p { color: #8d8998; font-size: 11px; margin-top: 7px; }
+.cv-ai-modal .cv-ai-layout { flex: 1; min-height: 0; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; }
+.cv-ai-modal .cv-ai-sidebar { min-height: 0; padding: 23px 20px; overflow-y: auto; overscroll-behavior: contain; }
+.cv-ai-modal .cv-chat-panel { min-height: 0; }
+.cv-ai-modal .cv-chat-messages { min-height: 0; max-height: none; overscroll-behavior: contain; }
+.cv-ai-modal .cv-chat-header, .cv-ai-modal .cv-chat-form, .cv-ai-modal .cv-chat-footnote, .cv-ai-modal .cv-error { flex-shrink: 0; }
+.cv-ai-modal .cv-chat-recommendations { grid-template-columns: 1fr; }
 .cv-detail-backdrop { position: absolute; top: 0; width: 100%; height: 275px; background-size: cover; background-position: center; opacity: .27; mask-image: linear-gradient(#000, transparent); }
 .cv-detail-content { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 37px; position: relative; padding: 55px 43px 42px; }
 .cv-detail-poster { width: 100%; aspect-ratio: 2/3; border-radius: 8px; border: 1px solid #ffffff15; }
@@ -477,6 +486,26 @@
   .cv-booking-film h3 { font-size: 12px; }
 }
 @media (max-width: 760px) {
+  .cv-ai-modal { height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); padding: 20px 14px 14px; }
+  .cv-ai-dialog-heading { margin-bottom: 15px; }
+  .cv-ai-dialog-heading h2 { font-size: 21px; }
+  .cv-ai-dialog-heading p { font-size: 10px; line-height: 1.6; }
+  .cv-ai-modal .cv-ai-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+  .cv-ai-modal .cv-ai-sidebar { display: block; padding: 12px; overflow: hidden; }
+  .cv-ai-modal .cv-ai-orb, .cv-ai-modal .cv-ai-sidebar h2, .cv-ai-modal .cv-ai-sidebar > p, .cv-ai-modal .cv-ai-scope, .cv-ai-modal .cv-ai-sidebar h3, .cv-ai-modal .cv-ai-sidebar-note { display: none; }
+  .cv-ai-modal .cv-ai-mode { margin-top: 0; font-size: 9px; }
+  .cv-ai-modal .cv-ai-prompts { display: flex; gap: 8px; overflow-x: auto; padding-top: 10px; }
+  .cv-ai-modal .cv-ai-prompt { width: auto; flex-shrink: 0; margin: 0; font-size: 10px !important; }
+  .cv-ai-modal .cv-chat-header { padding: 12px 14px; gap: 9px; }
+  .cv-ai-modal .cv-chat-header strong { font-size: 11px; }
+  .cv-ai-modal .cv-chat-online { font-size: 8px; }
+  .cv-ai-modal .cv-chat-messages { padding: 16px 14px; gap: 16px; }
+  .cv-ai-modal .cv-chat-bubble { padding: 11px 12px; }
+  .cv-ai-modal .cv-chat-form { margin: 0 12px; padding-left: 12px; }
+  .cv-ai-modal .cv-chat-form input { font-size: 16px; }
+  .cv-ai-modal .cv-chat-panel > .cv-error { margin: 0 12px 10px; }
+  .cv-ai-modal .cv-chat-footnote { padding: 10px 12px 12px; line-height: 1.6; }
+  .cv-ai-modal .cv-chat-footnote > svg { flex-shrink: 0; }
   .cv-header { height: 66px; }
   .cv-header-inner { width: calc(100% - 34px); }
   .cv-logo { font-size: 20px !important; }
@@ -507,7 +536,9 @@
   .cv-hero-buttons .cv-btn { font-size: 10px !important; padding: 11px 15px !important; }
   .cv-hero-note { font-size: 7px; letter-spacing: 1.7px; margin-top: 24px; }
   .cv-hero-side-label { display: none; }
-  .cv-hero-pagination { right: 24px; bottom: 27px; }
+  .cv-hero-pagination { right: 19px; bottom: 46px; gap: 7px; }
+  .cv-hero-pagination > em { font-size: 8px; }
+  .cv-hero-backdrop { object-position: 61% center; }
   .cv-scroll-hint { bottom: 25px; left: 21px; transform: none; font-size: 6px !important; letter-spacing: 1.4px; }
   .cv-movies-section { padding-top: 31px; }
   .cv-section-heading { align-items: flex-start; gap: 10px; }
@@ -550,11 +581,6 @@
   .cv-experience-link { margin-top: 16px; font-size: 10px; }
   .cv-experience-art { right: 34px; bottom: 34px; opacity: 1; }
   .cv-experience-art svg { width: 90px; height: 90px; }
-  .cv-footer-top { flex-direction: column; align-items: flex-start; padding: 28px 0; gap: 22px; }
-  .cv-footer-links { gap: 23px; flex-wrap: wrap; }
-  .cv-footer-links > button { font-size: 9px; }
-  .cv-footer-bottom { flex-wrap: wrap; gap: 10px 15px; padding-bottom: 23px; }
-  .cv-footer-bottom > span:last-child { width: 100%; margin-top: 2px; }
   .cv-inner-page { padding-top: 36px; padding-bottom: 45px; }
   .cv-page-heading { margin-bottom: 28px; }
   .cv-page-heading h1 { font-size: 31px; letter-spacing: -1px; }

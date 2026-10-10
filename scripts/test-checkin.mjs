@@ -13,10 +13,11 @@ async function login(email) { const result = await call("/api/auth/login", "POST
 try {
   const admin = await login("admin@cineverse.vn"); const staff = await login("staff@cineverse.vn");
   const baseline = (await call("/api/admin/summary", "GET", undefined, admin)).body;
-  const own = await call("/api/auth/register", "POST", { name: "Smoke Checkin", email: `smoke-checkin-${Date.now()}@cineverse.test`, password: "SmokeTest@123" });
+  const own = await call("/api/auth/register", "POST", { name: "Smoke Checkin", email: `smoke-checkin-${Date.now()}@cineverse.test`, password: "SmokeTest@123", birthDate: "2000-01-15" });
   assert.equal(own.status, 200); ids.user = own.body.user.id;
   const catalog = (await call("/api/bootstrap")).body;
-  const movie = await call("/api/admin/movies", "POST", { ...catalog.movies.find(m => m.status === "now"), id: undefined, title: `Smoke Checkin ${Date.now()}`, duration: 90 }, admin);
+  const { rating: _rating, reviewCount: _reviewCount, ...movieFields } = catalog.movies.find(m => m.status === "now");
+  const movie = await call("/api/admin/movies", "POST", { ...movieFields, id: undefined, title: `Smoke Checkin ${Date.now()}`, duration: 90 }, admin);
   assert.equal(movie.status, 201); ids.movie = movie.body.movie.id;
   const room = await call("/api/admin/rooms", "POST", { name: `Smoke Checkin ${Date.now()}`, rows: 2, cols: 4, type: "Standard" }, admin);
   assert.equal(room.status, 201); ids.room = room.body.room.id;
@@ -42,7 +43,7 @@ try {
 } finally {
   if (process.argv.includes("--cleanup-local-db")) {
     const quote = id => /^[a-f0-9-]{36}$/.test(id) ? `'${id}'` : "''";
-    const sql = `DELETE FROM booked_seats WHERE booking_id IN (SELECT id FROM bookings WHERE user_id=${quote(ids.user)}); DELETE FROM bookings WHERE user_id=${quote(ids.user)}; DELETE FROM sessions WHERE user_id=${quote(ids.user)}; DELETE FROM users WHERE id=${quote(ids.user)}; DELETE FROM showtimes WHERE movie_id=${quote(ids.movie)}; DELETE FROM rooms WHERE id=${quote(ids.room)}; DELETE FROM movies WHERE id=${quote(ids.movie)};`;
+    const sql = `DELETE FROM membership_transactions WHERE user_id=${quote(ids.user)}; DELETE FROM booked_seats WHERE booking_id IN (SELECT id FROM bookings WHERE user_id=${quote(ids.user)}); DELETE FROM bookings WHERE user_id=${quote(ids.user)}; DELETE FROM sessions WHERE user_id=${quote(ids.user)}; DELETE FROM users WHERE id=${quote(ids.user)}; DELETE FROM showtimes WHERE movie_id=${quote(ids.movie)}; DELETE FROM rooms WHERE id=${quote(ids.room)}; DELETE FROM movies WHERE id=${quote(ids.movie)};`;
     const result = spawnSync(process.execPath, ["node_modules/wrangler/bin/wrangler.js", "d1", "execute", "DB", "--local", "--persist-to", ".wrangler/state", "--config", ".sites-runtime/db-init.json", "--command", sql], { stdio: "inherit", env: process.env });
     if (result.status !== 0) console.error("Focused test cleanup failed.");
   }
