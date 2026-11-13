@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createQaCustomer } from './qa-customer.mjs';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { writeFileSync, unlinkSync } from 'node:fs';
@@ -21,7 +22,7 @@ check(analyticsPeriod(params('year=2026&month=12'),Date.parse('2026-10-10T00:00:
 for(const query of ['year=2003&month=2&day=29','year=2026&day=1','year=2026&month=13','year=abcd','year=2026&group=hour','year=2026&month=1&group=month','year=2026&revenue=100']){assert.throws(()=>analyticsPeriod(params(query)));checks++;}
 try{
     const admin=await login('admin@cineverse.vn'),staff=await login('staff@cineverse.vn');
-    const user=[];for(let i=0;i<2;i++){const result=await call('/api/auth/register','POST',{name:`Analytics ${i}`,email:`analytics-${stamp}-${i}@cineverse.test`,password:'AnalyticsQA@123',birthDate:'2000-01-15'});assert.equal(result.status,200);fixture.users.push(result.body.user.id);user.push({...result.body.user,cookie:result.cookie});}
+    const user=[];for(let i=0;i<2;i++){const result=await createQaCustomer(base,{name:`Analytics ${i}`,email:`analytics-${stamp}-${i}@cineverse.test`,password:'AnalyticsQA@123',birthDate:'2000-01-15'});assert.equal(result.status,200);fixture.users.push(result.body.user.id);user.push({...result.body.user,cookie:result.cookie});}
     for(const cookie of ['',staff,user[0].cookie])for(const path of ['/api/admin/analytics','/api/admin/analytics/export','/api/admin/analytics/insights']){const response=await fetch(base+path,{method:path.endsWith('insights')?'POST':'GET',headers:{Cookie:cookie,'Content-Type':'application/json'},...(path.endsWith('insights')?{body:JSON.stringify({chart:'all'})}:{})});check(response.status===(cookie?403:401),'Analytics/export/AI are admin only');}
     const movie=(await call('/api/bootstrap')).body.movies[0].id;
     const staffId=(await call('/api/auth/me','GET',undefined,staff)).body.user.id;

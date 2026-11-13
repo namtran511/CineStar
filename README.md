@@ -22,7 +22,11 @@ Truy cập địa chỉ Local được in trong terminal (mặc định http://l
 
 Có thể dùng `npm run launch` thay cho hai lệnh khởi tạo và chạy sau khi đã cài thư viện.
 
-## Tài khoản demo
+## Email xác minh và thông báo
+
+Đã có đăng ký bằng mã email 6 số, thông báo đặt/hủy vé, sự cố theo suất chiếu, ưu đãi và lời chúc sinh nhật. Xem [hướng dẫn cấu hình Resend](docs/EMAIL.md). Chạy `npm run db:init` để áp dụng migration mới. Đăng ký mới yêu cầu cấu hình email; tài khoản cũ vẫn đăng nhập được và xác minh tại **Thẻ thành viên → Thông báo qua email**. Admin theo dõi tại **Thông báo email**. Chạy `npm run test:email` để kiểm tra mà không gửi mail thật.
+
+## Tài khoản demo có sẵn
 
 | Vai trò | Email | Mật khẩu |
 | --- | --- | --- |

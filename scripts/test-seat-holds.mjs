@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createQaCustomer } from './qa-customer.mjs';
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { existsSync, rmSync, writeFileSync } from "node:fs";
@@ -36,7 +37,7 @@ async function login(email) {
   return result.cookie;
 }
 async function register(label) {
-  const result = await call("/api/auth/register", { method: "POST", body: { name: `Seat Hold QA ${label}`, email: `seat-hold-${label}-${stamp}@cineverse.test`, password: "SeatHoldQA@123", birthDate: "2000-01-15" } });
+  const result = await createQaCustomer(base, { name: `Seat Hold QA ${label}`, email: `seat-hold-${label}-${stamp}@cineverse.test`, password: "SeatHoldQA@123", birthDate: "2000-01-15" });
   if (result.body.user?.id) fixture.users.push(result.body.user.id);
   assert.equal(result.status, 200, JSON.stringify(result.body));
   return { ...result.body.user, cookie: result.cookie };

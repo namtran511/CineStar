@@ -16,6 +16,7 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "db:init": "node scripts/init-db.mjs",
+    "email:setup": "node scripts/setup-email.mjs",
     "check": "node scripts/check-javascript.mjs",
     "test:smoke": "node scripts/smoke-test.mjs --cleanup-local-db",
     "test:checkin": "node scripts/test-checkin.mjs --cleanup-local-db",
@@ -23,6 +24,7 @@
     "test:reviews": "node scripts/test-reviews.mjs",
     "test:membership": "node scripts/test-membership.mjs",
     "test:ai": "node scripts/test-ai.mjs",
+    "test:email": "node scripts/test-email.mjs",
     "test:analytics": "node scripts/test-analytics.mjs",
     "test:audit": "node scripts/test-member-audit.mjs",
     "launch": "node scripts/launch.mjs"
