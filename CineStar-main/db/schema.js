@@ -4,6 +4,7 @@ export const users = sqliteTable("users", {
     id: text("id").primaryKey(), name: text("name").notNull(), email: text("email").notNull().unique(),
     passwordHash: text("password_hash").notNull(), role: text("role", { enum: ["admin", "staff", "user"] }).notNull().default("user"), createdAt: text("created_at").notNull(),
     birthDate: text("birth_date"), deletedAt: text("deleted_at"), points: integer("points").notNull().default(0), lifetimePoints: integer("lifetime_points").notNull().default(0),
+    emailVerifiedAt:text('email_verified_at'), emailMarketing:integer('email_marketing').notNull().default(0), emailBirthday:integer('email_birthday').notNull().default(0), emailUnsubscribeToken:text('email_unsubscribe_token'),
 }, (t) => [check("users_points_nonnegative", sql`${t.points} >= 0`), check("users_lifetime_points_nonnegative", sql`${t.lifetimePoints} >= 0`)]);
 export const sessions = sqliteTable("sessions", {
     id: text("id").primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }), expiresAt: integer("expires_at").notNull(),
@@ -52,6 +53,14 @@ export const reviews = sqliteTable("reviews", {
     check("reviews_comment_valid", sql`length(trim(${t.comment})) BETWEEN 1 AND 2000`),
 ]);
 export const metadata = sqliteTable("metadata", { key: text("key").primaryKey(), value: text("value").notNull() });
+export const emailChallenges = sqliteTable('email_challenges', {
+    id:text('id').primaryKey(),email:text('email').notNull(),purpose:text('purpose').notNull(),userId:text('user_id'),name:text('name').notNull(),passwordHash:text('password_hash'),birthDate:text('birth_date'),marketing:integer('marketing').notNull().default(0),birthday:integer('birthday').notNull().default(0),codeHash:text('code_hash').notNull(),expiresAt:integer('expires_at').notNull(),resendAt:integer('resend_at').notNull(),attempts:integer('attempts').notNull().default(0),createdAt:integer('created_at').notNull(),
+},t=>[uniqueIndex('email_challenges_email_purpose_unique').on(t.email,t.purpose)]);
+export const emailRateLimits = sqliteTable('email_rate_limits',{id:text('id').primaryKey(),count:integer('count').notNull(),expiresAt:integer('expires_at').notNull()});
+export const emailIncidents = sqliteTable('email_incidents',{id:text('id').primaryKey(),showtimeId:text('showtime_id').notNull(),subject:text('subject').notNull(),message:text('message').notNull(),createdBy:text('created_by').notNull(),createdAt:integer('created_at').notNull()});
+export const emailOutbox = sqliteTable('email_outbox',{
+    id:text('id').primaryKey(),userId:text('user_id').notNull().references(()=>users.id,{onDelete:'cascade'}),recipient:text('recipient').notNull(),kind:text('kind').notNull(),sourceId:text('source_id').notNull(),data:text('data').notNull(),rendered:text('rendered'),status:text('status').notNull().default('pending'),attempts:integer('attempts').notNull().default(0),nextAttempt:integer('next_attempt').notNull().default(0),leaseUntil:integer('lease_until').notNull().default(0),createdAt:integer('created_at').notNull(),sentAt:integer('sent_at'),providerId:text('provider_id'),lastError:text('last_error'),
+},t=>[index('email_outbox_due').on(t.status,t.nextAttempt,t.leaseUntil)]);
 export const auditContext = sqliteTable('audit_context', {
     id: integer('id').primaryKey(), requestId:text('request_id'), actorId:text('actor_id'), actorName:text('actor_name'), actorRole:text('actor_role'), reason:text('reason'), operation:text('operation'),
 });

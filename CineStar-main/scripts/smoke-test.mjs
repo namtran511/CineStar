@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createQaCustomer } from './qa-customer.mjs';
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -15,7 +16,7 @@ async function call(path, { method = "GET", body, cookie = "" } = {}) {
   return { status: response.status, body: json, cookie: response.headers.get("set-cookie")?.split(";")[0], headers: response.headers };
 }
 async function login(email) { const result = await call("/api/auth/login", { method: "POST", body: { email, password: "Demo@123" } }); check(result.status === 200 && result.cookie, `Đăng nhập ${email}`); check(/HttpOnly/i.test(result.headers.get("set-cookie")) && /SameSite=Lax/i.test(result.headers.get("set-cookie")), "Session cookie có HttpOnly và SameSite"); return result; }
-async function register(label) { const result = await call("/api/auth/register", { method: "POST", body: { name: `Smoke ${label} ${stamp}`, email: `smoke-${label}-${stamp}@cineverse.test`, password: "SmokeTest@123", role: "admin", birthDate: "2000-01-15" } }); check(result.status === 200 && result.body.user.role === "user", "Đăng ký luôn tạo người dùng thường"); cleanup.users.push(result.body.user.id); return result; }
+async function register(label) { const result = await createQaCustomer(base, { name: `Smoke ${label} ${stamp}`, email: `smoke-${label}-${stamp}@cineverse.test`, password: "SmokeTest@123", birthDate: "2000-01-15" }); check(result.status === 200 && result.body.user.role === "user", "Tài khoản kiểm thử có quyền khách hàng"); cleanup.users.push(result.body.user.id); return result; }
 async function create(resource, data, cookie) { const result = await call(`/api/admin/${resource}`, { method: "POST", cookie, body: data }); const key = { movies: "movie", rooms: "room", showtimes: "showtime", combos: "combo", promotions: "promotion" }[resource]; check(result.status === 201 && result.body[key]?.id, `Admin tạo ${resource}`); cleanup[resource].push(result.body[key].id); return result.body[key]; }
 async function book(cookie, body) {
   const holdToken = randomUUID();

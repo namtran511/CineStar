@@ -1,7 +1,8 @@
 import handler from "vinext/server/fetch-handler";
 import { runWithConnectorBinding } from "../lib/connector-context";
+import { runEmailJobs } from '../lib/server/email-jobs';
 export default {
-    fetch(request, env, ctx) {
+    async fetch(request, env, ctx) {
         let binding = ctx.props?.CONNECTORS;
         // Local preview emulates the same request-scoped capability. This branch and
         // the auxiliary service binding are absent from production builds.
@@ -22,6 +23,13 @@ export default {
                 },
             };
         }
-        return runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx));
+        const response = await runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx));
+        if (request.method !== 'GET' && new URL(request.url).pathname.startsWith('/api/') && response.ok) {
+            ctx.waitUntil(runEmailJobs(env,{limit:2}).catch(() => console.error('Email queue processing failed; scheduled retry will follow.')));
+        }
+        return response;
+    },
+    async scheduled(_controller, env, ctx) {
+        ctx.waitUntil(runEmailJobs(env));
     },
 };

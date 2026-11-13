@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';import{randomUUID}from'node:crypto';import{spawnSync}from'node:child_process';import{writeFileSync,unlinkSync}from'node:fs';
+import { createQaCustomer } from './qa-customer.mjs';
 const base='http://localhost:5173',stamp=randomUUID(),fixtures={users:[],combo:''};let checks=0;
 const quote=value=>`'${String(value).replaceAll("'","''")}'`;
 function check(value,label){assert.ok(value,label);checks++;console.log('OK '+label);}
@@ -8,7 +9,7 @@ async function login(email){const r=await call('/api/auth/login','POST',{email,p
 async function logs(id,admin,entity='users'){const result=await call(`/api/admin/audit?entity=${entity}&entity_id=${encodeURIComponent(id)}`,'GET',undefined,admin.cookie);assert.equal(result.status,200);return result.body.logs;}
 try{
  const admin=await login('admin@cineverse.vn'),staff=await login('staff@cineverse.vn');
- const registration=await call('/api/auth/register','POST',{name:'QA audit temporary member',email:`audit-${stamp}@cineverse.test`,password:'AuditTest@123',birthDate:'2000-01-15'});assert.equal(registration.status,200,JSON.stringify(registration.body));const member={cookie:registration.cookie,...registration.body.user};fixtures.users.push(member.id);
+ const registration=await createQaCustomer(base,{name:'QA audit temporary member',email:`audit-${stamp}@cineverse.test`,password:'AuditTest@123',birthDate:'2000-01-15'});assert.equal(registration.status,200,JSON.stringify(registration.body));const member={cookie:registration.cookie,...registration.body.user};fixtures.users.push(member.id);
  for(const cookie of ['',member.cookie,staff.cookie])check((await call('/api/admin/audit','GET',undefined,cookie)).status===(cookie?403:401),'Audit log is admin-only');
  for(const cookie of ['',member.cookie])check((await call('/api/staff/members?q=audit','GET',undefined,cookie)).status===(cookie?403:401),'Customer lookup requires staff/admin');
  const found=await call(`/api/staff/members?q=${encodeURIComponent(member.email)}`,'GET',undefined,staff.cookie);check(found.body.members.length===1&&found.body.members[0].id===member.id,'Staff finds customer by email');

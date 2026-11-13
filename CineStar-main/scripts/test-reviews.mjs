@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createQaCustomer } from './qa-customer.mjs';
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, rmSync, writeFileSync } from "node:fs";
@@ -36,7 +37,7 @@ async function login(email) {
   return response.cookie;
 }
 async function register(label) {
-  const response = await call("/api/auth/register", { method: "POST", body: { name: `Review QA ${label}`, email: `reviews-${label}-${stamp}@cineverse.test`, password: "ReviewTest@123", birthDate: "2000-01-15" } });
+  const response = await createQaCustomer(base, { name: `Review QA ${label}`, email: `reviews-${label}-${stamp}@cineverse.test`, password: "ReviewTest@123", birthDate: "2000-01-15" });
   assert.equal(response.status, 200, `Register isolated ${label} customer`);
   fixtures.users.push(response.body.user.id);
   return { ...response.body.user, cookie: response.cookie };

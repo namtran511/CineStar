@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createQaCustomer } from './qa-customer.mjs';
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 const base = new URL(process.argv.find(arg => /^https?:\/\//.test(arg)) || "http://localhost:5173");
@@ -14,7 +15,7 @@ async function login(email) { const result = await call("/api/auth/login", "POST
 try {
   const admin = await login("admin@cineverse.vn"); const staff = await login("staff@cineverse.vn");
   const baseline = (await call("/api/admin/summary", "GET", undefined, admin)).body;
-  const own = await call("/api/auth/register", "POST", { name: "Smoke Checkin", email: `smoke-checkin-${Date.now()}@cineverse.test`, password: "SmokeTest@123", birthDate: "2000-01-15" });
+  const own = await createQaCustomer(base, { name: "Smoke Checkin", email: `smoke-checkin-${Date.now()}@cineverse.test`, password: "SmokeTest@123", birthDate: "2000-01-15" });
   assert.equal(own.status, 200); ids.user = own.body.user.id;
   const catalog = (await call("/api/bootstrap")).body;
   const { rating: _rating, reviewCount: _reviewCount, ...movieFields } = catalog.movies.find(m => m.status === "now");
