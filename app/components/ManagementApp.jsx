@@ -7,6 +7,7 @@ import { StaffMembers } from "./MemberOperations";
 import AuditLog from "./AuditLog";
 import { AccountsPanel, RewardsPanel, MemberDialog } from "./AdminMembers";
 import { movieRatingLabel } from "@/lib/movie-rating";
+import { useSeatHold } from "@/hooks/use-seat-hold";
 const titles = { overview: "Tổng quan", movies: "Quản lý phim", showtimes: "Lịch chiếu", rooms: "Phòng chiếu", combos: "Bắp & nước", promotions: "Ưu đãi", users: "Tài khoản", bookings: "Đơn vé & soát vé", pos: "Bán vé tại quầy", rewards: "Quà thành viên", members: "Khách hàng", audit: "Nhật ký thay đổi" };
 const singular = { movies: "phim", showtimes: "suất chiếu", rooms: "phòng chiếu", combos: "combo", promotions: "ưu đãi" };
 const money = (value) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
@@ -250,14 +251,13 @@ function PointOfSale({ data, onComplete }) {
     const movies = data.movies.filter(movie => movie.status === "now");
     const [movieId, setMovieId] = useState(movies[0]?.id || "");
     const [showtimeId, setShowtimeId] = useState("");
-    const [seats, setSeats] = useState([]);
-    const [occupied, setOccupied] = useState([]);
     const [combos, setCombos] = useState({});
     const [promo, setPromo] = useState("");
     const [payment, setPayment] = useState("bank");
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
+    const seatHold = useSeatHold(showtimeId, saving);
+    const { seats, occupied, held, loading, error: seatLoadError } = seatHold;
     const [confirming, setConfirming] = useState(false);
     const [now, setNow] = useState(() => Date.now());
     const shows = data.showtimes.filter(show => show.movieId === movieId && Date.parse(show.startTime) > now + 600000).sort((a, b) => Date.parse(a.startTime) - Date.parse(b.startTime));
@@ -268,60 +268,33 @@ function PointOfSale({ data, onComplete }) {
     const promotion = data.promotions.find(item => item.code === promo.trim().toUpperCase() && item.active && subtotal >= item.minTotal);
     const total = promotion ? Math.round(subtotal * (100 - promotion.discountPercent) / 100) : subtotal;
     useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30000); return () => window.clearInterval(timer); }, []);
-    useEffect(() => {
-        if (!showtimeId)
-            return;
-        let active = true;
-        void request(`/api/showtimes/${showtimeId}/seats`).then(result => { if (active)
-            setOccupied(result.occupied); }).catch(caught => { if (active)
-            setError(caught instanceof Error ? caught.message : "Không thể tải ghế."); }).finally(() => { if (active)
-            setLoading(false); });
-        return () => { active = false; };
-    }, [showtimeId]);
     const submit = async () => {
-        if (!show || !seats.length || saving)
+        if (!show || !seatHold.valid || saving)
             return;
         setSaving(true);
         setError("");
         try {
-            const result = await request("/api/bookings", { method: "POST", body: JSON.stringify({ showtimeId, seats, combos: Object.entries(combos).filter(([, qty]) => qty > 0).map(([id, qty]) => ({ id, qty })), promotionCode: promo.trim() || undefined, paymentMethod: payment }) });
+            const result = await request("/api/bookings", { method: "POST", body: JSON.stringify({ showtimeId, holdToken: seatHold.holdToken, seats, combos: Object.entries(combos).filter(([, qty]) => qty > 0).map(([id, qty]) => ({ id, qty })), promotionCode: promo.trim() || undefined, paymentMethod: payment }) });
             setConfirming(false);
-            setSeats([]);
+            seatHold.complete(result.booking.seats);
             setCombos({});
             setPromo("");
-            setOccupied(current => [...new Set([...current, ...result.booking.seats])]);
             await onComplete(result.booking);
         }
         catch (caught) {
             setError(caught instanceof Error ? caught.message : "Không thể bán vé.");
             setConfirming(false);
-            try {
-                const latest = await request(`/api/showtimes/${showtimeId}/seats`);
-                setOccupied(latest.occupied);
-                setSeats(current => current.filter(seat => !latest.occupied.includes(seat)));
-            }
-            catch { /* original error shown */ }
+            window.setTimeout(() => void seatHold.reload(), 0);
         }
         finally {
             setSaving(false);
         }
     };
-    return <div className="mg-pos-layout"><div className="mg-pos-main"><section className="mg-card mg-pos-selection"><div className="mg-card-title"><h2><span className="mg-step">01</span>Chọn suất chiếu</h2></div><div className="mg-pos-selects"><label className="mg-field"><span>Phim</span><select value={movieId} onChange={event => { setMovieId(event.target.value); setShowtimeId(""); setSeats([]); setOccupied([]); setError(""); setLoading(false); }}>{!movies.length && <option value="">Chưa có phim đang chiếu</option>}{movies.map(item => <option value={item.id} key={item.id}>{item.title}</option>)}</select></label><label className="mg-field"><span>Suất chiếu</span><select value={showtimeId} onChange={event => { setShowtimeId(event.target.value); setSeats([]); setOccupied([]); setError(""); setLoading(Boolean(event.target.value)); }}><option value="">{shows.length ? "Chọn suất chiếu" : "Chưa có suất mở bán"}</option>{shows.map(item => <option key={item.id} value={item.id}>{when(item.startTime)} · {data.rooms.find(room => room.id === item.roomId)?.name} · {money(item.price)}</option>)}</select></label></div></section>
-    <section className="mg-card mg-pos-seats"><div className="mg-card-title"><h2><span className="mg-step">02</span>Chọn ghế</h2>{room && <span className="mg-period">{room.name} · {room.type}</span>}</div>{error && <div className="mg-alert mg-alert-error" role="alert">{error}<button onClick={async () => { if (!showtimeId)
-        return; setLoading(true); try {
-        const result = await request(`/api/showtimes/${showtimeId}/seats`);
-        setOccupied(result.occupied);
-        setError("");
-    }
-    catch (caught) {
-        setError(caught instanceof Error ? caught.message : "Không thể tải ghế.");
-    }
-    finally {
-        setLoading(false);
-    } }}>Tải lại ghế</button></div>}{!show || !room ? <Empty title="Chọn suất chiếu để xem sơ đồ ghế" detail="Tối đa 8 ghế trong mỗi đơn vé." icon={<Clapperboard size={30}/>}/> : loading ? <div className="mg-loading"><RefreshCw size={21} className="mg-spin"/>Đang cập nhật sơ đồ ghế…</div> : <><div className="mg-pos-screen"><div />MÀN HÌNH</div><div className="mg-seat-map"><div style={{ minWidth: `${room.cols * 35 + 35}px` }}>{Array.from({ length: room.rows }, (_, row) => <div className="mg-seat-row" key={row}><span>{String.fromCharCode(65 + row)}</span>{Array.from({ length: room.cols }, (_, col) => { const id = `${String.fromCharCode(65 + row)}${col + 1}`; const taken = occupied.includes(id); const selected = seats.includes(id); return <button key={id} type="button" aria-label={`Ghế ${id}${taken ? ", đã đặt" : selected ? ", đang chọn" : ", còn trống"}`} aria-pressed={selected} disabled={taken || saving || (!selected && seats.length >= 8)} className={`mg-seat ${taken ? "taken" : ""} ${selected ? "selected" : ""}`} onClick={() => setSeats(current => current.includes(id) ? current.filter(seat => seat !== id) : [...current, id])}>{col + 1}</button>; })}</div>)}</div></div><div className="mg-seat-legend"><span><i />Còn trống</span><span><i className="selected"/>Đang chọn</span><span><i className="taken"/>Đã đặt</span></div><p className="mg-pos-hint">{seats.length >= 8 ? "Đã đạt giới hạn 8 ghế. Bỏ chọn một ghế để đổi vị trí." : "Chọn tối đa 8 ghế. Ghế chỉ được giữ khi đơn được xác nhận."}</p></>}</section>
+    return <div className="mg-pos-layout"><div className="mg-pos-main"><section className="mg-card mg-pos-selection"><div className="mg-card-title"><h2><span className="mg-step">01</span>Chọn suất chiếu</h2></div><div className="mg-pos-selects"><label className="mg-field"><span>Phim</span><select value={movieId} disabled={saving || seatHold.pending} onChange={event => { setMovieId(event.target.value); setShowtimeId(""); setError(""); setConfirming(false); }}>{!movies.length && <option value="">Chưa có phim đang chiếu</option>}{movies.map(item => <option value={item.id} key={item.id}>{item.title}</option>)}</select></label><label className="mg-field"><span>Suất chiếu</span><select value={showtimeId} disabled={saving || seatHold.pending} onChange={event => { setShowtimeId(event.target.value); setError(""); setConfirming(false); }}><option value="">{shows.length ? "Chọn suất chiếu" : "Chưa có suất mở bán"}</option>{shows.map(item => <option key={item.id} value={item.id}>{when(item.startTime)} · {data.rooms.find(room => room.id === item.roomId)?.name} · {money(item.price)}</option>)}</select></label></div></section>
+    <section className="mg-card mg-pos-seats"><div className="mg-card-title"><h2><span className="mg-step">02</span>Chọn ghế</h2>{room && <span className="mg-period">{room.name} · {room.type}</span>}</div>{(error || seatLoadError) && <div className="mg-alert mg-alert-error" role="alert">{error || seatLoadError}<button disabled={saving || seatHold.pending} onClick={() => { setError(""); void seatHold.reload(); }}>Tải lại ghế</button></div>}{!show || !room ? <Empty title="Chọn suất chiếu để xem sơ đồ ghế" detail="Tối đa 8 ghế trong mỗi đơn vé." icon={<Clapperboard size={30}/>}/> : loading ? <div className="mg-loading"><RefreshCw size={21} className="mg-spin"/>Đang cập nhật sơ đồ ghế…</div> : <><div className="mg-pos-screen"><div />MÀN HÌNH</div><div className="mg-seat-map"><div style={{ minWidth: `${room.cols * 35 + 35}px` }}>{Array.from({ length: room.rows }, (_, row) => <div className="mg-seat-row" key={row}><span>{String.fromCharCode(65 + row)}</span>{Array.from({ length: room.cols }, (_, col) => { const id = `${String.fromCharCode(65 + row)}${col + 1}`; const taken = occupied.includes(id); const reserved = held.includes(id); const selected = seats.includes(id); return <button key={id} type="button" aria-label={`Ghế ${id}${taken ? ", đã đặt" : reserved ? ", người khác đang giữ" : selected ? ", bạn đang giữ" : ", còn trống"}`} aria-pressed={selected} disabled={taken || reserved || saving || seatHold.pending || !!seatLoadError || (!selected && seats.length >= 8)} className={`mg-seat ${taken ? "taken" : ""} ${reserved ? "held" : ""} ${selected ? "selected" : ""}`} onClick={() => { setError(""); void seatHold.toggleSeat(id); }}>{col + 1}</button>; })}</div>)}</div></div><div className="mg-seat-legend"><span><i />Còn trống</span><span><i className="selected"/>Bạn đang giữ</span><span><i className="held"/>Người khác giữ</span><span><i className="taken"/>Đã đặt</span></div><p className="mg-pos-hint">{seats.length >= 8 ? "Đã đạt giới hạn 8 ghế. Bỏ chọn một ghế để đổi vị trí." : "Ghế được giữ ngay khi chọn, tối đa 10 phút. Bỏ chọn để nhả ghế."}</p></>}</section>
     <section className="mg-card mg-pos-combos"><div className="mg-card-title"><h2><span className="mg-step">03</span>Thêm bắp & nước<span className="mg-optional">Tùy chọn</span></h2></div>{data.combos.map(combo => <div className="mg-pos-combo" key={combo.id}><div><strong>{combo.name}</strong><p>{combo.description}</p><span>{money(combo.price)}</span></div><div className="mg-quantity"><button aria-label={`Giảm ${combo.name}`} disabled={!combos[combo.id] || saving} onClick={() => setCombos({ ...combos, [combo.id]: Math.max(0, (combos[combo.id] || 0) - 1) })}><Minus size={14}/></button><b>{combos[combo.id] || 0}</b><button aria-label={`Thêm ${combo.name}`} disabled={(combos[combo.id] || 0) >= 5 || saving} onClick={() => setCombos({ ...combos, [combo.id]: (combos[combo.id] || 0) + 1 })}><Plus size={14}/></button></div></div>)}</section>
-  </div><aside className="mg-card mg-pos-summary"><div className="mg-card-title"><h2>Thông tin đơn vé</h2><Ticket size={20}/></div>{movie && <div className="mg-pos-movie"><img src={movie.poster} alt=""/><div><h3>{movie.title}</h3><span>{movie.ageRating} · {movie.duration} phút</span><p>{show ? when(show.startTime) : "Chưa chọn suất chiếu"}</p>{show && <span>{show.format} · {room?.name}</span>}</div></div>}<div className="mg-pos-order"><div><span>Ghế đã chọn</span><strong>{seats.length ? seats.join(", ") : "—"}</strong></div><div><span>Tiền vé ({seats.length})</span><strong>{money((show?.price || 0) * seats.length)}</strong></div>{Object.entries(combos).filter(([, qty]) => qty > 0).map(([id, qty]) => <div key={id}><span>{data.combos.find(item => item.id === id)?.name} × {qty}</span><strong>{money((data.combos.find(item => item.id === id)?.price || 0) * qty)}</strong></div>)}</div><label className="mg-field mg-promo-field"><span>Mã ưu đãi</span><input placeholder="Nhập mã (nếu có)" value={promo} disabled={saving} onChange={event => setPromo(event.target.value.toUpperCase())}/>{promo && <small className={promotion ? "mg-accent" : ""}>{promotion ? `Đã áp dụng giảm ${promotion.discountPercent}%` : "Mã chưa hợp lệ hoặc đơn chưa đạt mức tối thiểu."}</small>}</label><label className="mg-field mg-payment-field"><span>Phương thức thanh toán giả lập</span><select value={payment} disabled={saving} onChange={event => setPayment(event.target.value)}><option value="bank">Chuyển khoản</option><option value="momo">Ví MoMo</option><option value="card">Thẻ ngân hàng</option></select></label>{promotion && <div className="mg-pos-discount"><span>Giảm giá</span><strong>−{money(subtotal - total)}</strong></div>}<div className="mg-pos-total"><span>Tổng thanh toán</span><strong>{money(total)}</strong></div><button className="mg-primary mg-pos-pay" disabled={!show || !seats.length || loading || saving || Boolean(error) || Boolean(promo && !promotion)} onClick={() => setConfirming(true)}><CreditCard size={18}/>{saving ? "Đang phát hành…" : "Thanh toán & phát hành vé"}</button><p className="mg-pos-payment-note"><ShieldCheck size={14}/>Giao dịch demo. Không thu tiền thật.<br />Đơn vé tại quầy được lưu theo tài khoản nhân viên.</p></aside>
+  </div><aside className="mg-card mg-pos-summary"><div className={`mg-hold-status ${seatHold.remainingSeconds > 0 && seatHold.remainingSeconds <= 60 ? "urgent" : ""}`} role="status">{seatHold.pending ? <><RefreshCw className="mg-spin" size={16}/>Đang cập nhật giữ ghế…</> : seats.length > 0 ? <><Clock3 size={16}/><div><strong>Giữ ghế còn {seatHold.countdown}</strong><small>Hoàn tất thanh toán trước khi hết giờ.</small></div></> : <><Clock3 size={16}/><span>Ghế được giữ ngay khi chọn, tối đa 10 phút.</span></>}</div><div className="mg-card-title"><h2>Thông tin đơn vé</h2><Ticket size={20}/></div>{movie && <div className="mg-pos-movie"><img src={movie.poster} alt=""/><div><h3>{movie.title}</h3><span>{movie.ageRating} · {movie.duration} phút</span><p>{show ? when(show.startTime) : "Chưa chọn suất chiếu"}</p>{show && <span>{show.format} · {room?.name}</span>}</div></div>}<div className="mg-pos-order"><div><span>Ghế đã chọn</span><strong>{seats.length ? seats.join(", ") : "—"}</strong></div><div><span>Tiền vé ({seats.length})</span><strong>{money((show?.price || 0) * seats.length)}</strong></div>{Object.entries(combos).filter(([, qty]) => qty > 0).map(([id, qty]) => <div key={id}><span>{data.combos.find(item => item.id === id)?.name} × {qty}</span><strong>{money((data.combos.find(item => item.id === id)?.price || 0) * qty)}</strong></div>)}</div><label className="mg-field mg-promo-field"><span>Mã ưu đãi</span><input placeholder="Nhập mã (nếu có)" value={promo} disabled={saving} onChange={event => setPromo(event.target.value.toUpperCase())}/>{promo && <small className={promotion ? "mg-accent" : ""}>{promotion ? `Đã áp dụng giảm ${promotion.discountPercent}%` : "Mã chưa hợp lệ hoặc đơn chưa đạt mức tối thiểu."}</small>}</label><label className="mg-field mg-payment-field"><span>Phương thức thanh toán giả lập</span><select value={payment} disabled={saving} onChange={event => setPayment(event.target.value)}><option value="bank">Chuyển khoản</option><option value="momo">Ví MoMo</option><option value="card">Thẻ ngân hàng</option></select></label>{promotion && <div className="mg-pos-discount"><span>Giảm giá</span><strong>−{money(subtotal - total)}</strong></div>}<div className="mg-pos-total"><span>Tổng thanh toán</span><strong>{money(total)}</strong></div><button className="mg-primary mg-pos-pay" disabled={!show || !seatHold.valid || saving || Boolean(error) || Boolean(promo && !promotion)} onClick={() => setConfirming(true)}><CreditCard size={18}/>{saving ? "Đang phát hành…" : "Thanh toán & phát hành vé"}</button><p className="mg-pos-payment-note"><ShieldCheck size={14}/>Giao dịch demo. Không thu tiền thật.<br />Đơn vé tại quầy được lưu theo tài khoản nhân viên.</p></aside>
     {confirming && <Modal title="Xác nhận thanh toán giả lập" onClose={() => { if (!saving)
-        setConfirming(false); }}><p className="mg-confirm-description">Phát hành {seats.length} vé cho <strong>{movie?.title}</strong>, ghế <strong>{seats.join(", ")}</strong> tại {room?.name} · {show ? when(show.startTime) : ""}. Đơn sẽ được ghi nhận đã thanh toán với tổng {money(total)}. Không có tiền thật được giao dịch.</p><div className="mg-modal-actions"><button className="mg-secondary" disabled={saving} onClick={() => setConfirming(false)}>Quay lại</button><button className="mg-primary" disabled={saving} onClick={() => void submit()}>{saving ? <RefreshCw className="mg-spin" size={16}/> : <Check size={16}/>}{saving ? "Đang phát hành…" : "Xác nhận thanh toán"}</button></div></Modal>}
+        setConfirming(false); }}><p className="mg-confirm-description">{seatHold.valid ? `Thời gian giữ ghế còn ${seatHold.countdown}. ` : "Ghế chưa được giữ hoặc đã hết thời gian. Vui lòng quay lại chọn ghế. "}Phát hành {seats.length} vé cho <strong>{movie?.title}</strong>, ghế <strong>{seats.join(", ")}</strong> tại {room?.name} · {show ? when(show.startTime) : ""}. Đơn sẽ được ghi nhận đã thanh toán với tổng {money(total)}. Không có tiền thật được giao dịch.</p><div className="mg-modal-actions"><button className="mg-secondary" disabled={saving} onClick={() => setConfirming(false)}>Quay lại</button><button className="mg-primary" disabled={saving || !seatHold.valid} onClick={() => void submit()}>{saving ? <RefreshCw className="mg-spin" size={16}/> : <Check size={16}/>}{saving ? "Đang phát hành…" : "Xác nhận thanh toán"}</button></div></Modal>}
   </div>;
 }

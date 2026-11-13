@@ -1,4 +1,20 @@
-import { getDb } from "@/lib/server/db";
-import { api, HttpError } from "@/lib/server/http";
-export const GET = api(async (_request, context) => { const { id } = await context.params; const db = await getDb(); if (!await db.prepare("SELECT id FROM showtimes WHERE id=?").bind(id).first())
-    throw new HttpError(404, "Suất chiếu không tồn tại."); const rows = await db.prepare("SELECT seat FROM booked_seats WHERE showtime_id=?").bind(id).all(); return Response.json({ occupied: rows.results.map(r => r.seat) }); });
+import { getUser, requireUser } from "@/lib/server/auth";
+import { api, jsonBody } from "@/lib/server/http";
+import { releaseSeatHold, replaceSeatHold, seatHoldToken, seatSnapshot } from "@/lib/server/seat-holds";
+
+export const GET = api(async (request, context) => {
+    const { id } = await context.params;
+    const token = new URL(request.url).searchParams.get("holdToken");
+    return Response.json(await seatSnapshot(id, token ? await getUser(request) : null, token ? seatHoldToken(token) : null));
+});
+export const PUT = api(async (request, context) => {
+    const user = await requireUser(request);
+    const { id } = await context.params;
+    return Response.json(await replaceSeatHold(user, id, await jsonBody(request)));
+});
+export const DELETE = api(async (request, context) => {
+    const user = await requireUser(request);
+    const { id } = await context.params;
+    const body = await jsonBody(request);
+    return Response.json(await releaseSeatHold(user, id, seatHoldToken(body.holdToken)));
+});

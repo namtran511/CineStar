@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 const base = new URL(process.argv.find(arg => /^https?:\/\//.test(arg)) || "http://localhost:5173");
 if (!["localhost", "127.0.0.1", "[::1]"].includes(base.hostname)) throw new Error("Local test server required.");
 const ids = { user: "", movie: "", room: "", shows: [] };
@@ -28,7 +29,9 @@ try {
   check((await call(`/api/admin/movies/${ids.movie}`, "PATCH", { duration: 130 }, admin)).status === 409, "Sửa thời lượng không được tạo lịch trùng phòng");
   check((await call(`/api/admin/movies/${ids.movie}`, "PATCH", { status: "coming" }, admin)).status === 409, "Phim có suất tương lai không chuyển sang sắp chiếu");
   check((await call(`/api/admin/movies/${ids.movie}`, "PATCH", { description: "Mô tả mới của phim kiểm thử vẫn được cập nhật." }, admin)).status === 200, "Thông tin phim còn có thể cập nhật khi không ảnh hưởng lịch");
-  const bought = await call("/api/bookings", "POST", { showtimeId: ids.shows[0], seats: ["A1"], combos: [], paymentMethod: "momo" }, own.cookie);
+  const holdToken = randomUUID();
+  assert.equal((await call(`/api/showtimes/${ids.shows[0]}/seats`, "PUT", { holdToken, seats: ["A1"] }, own.cookie)).status, 200);
+  const bought = await call("/api/bookings", "POST", { showtimeId: ids.shows[0], holdToken, seats: ["A1"], combos: [], paymentMethod: "momo" }, own.cookie);
   assert.equal(bought.status, 201); const booking = bought.body.booking;
   const searched = await call(`/api/bookings?q=${booking.code}`, "GET", undefined, staff);
   check(searched.body.bookings.length === 1 && searched.body.bookings[0].id === booking.id, "Nhân viên tìm vé theo mã chính xác");

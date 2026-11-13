@@ -99,6 +99,14 @@ Mã nguồn dùng JavaScript: `.jsx` cho giao diện React, `.js` cho API/nghi�
 
 Toàn bộ MoMo, chuyển khoản và thẻ là **giả lập**. Không sandbox, không cổng thanh toán ngoài, không thu thông tin thẻ và không trừ tiền. Xác nhận thanh toán tạo đơn trạng thái `paid`. Tổng tiền được tính ở server từ ghế, giá suất chiếu, combo và mã ưu đãi đang hiệu lực.
 
+## Giữ ghế khi chọn
+
+Khách hàng và nhân viên bán vé tại quầy được giữ ghế ngay khi chọn, trước khi thanh toán. Ghế của bạn có màu đang chọn; ghế người khác đang giữ có màu riêng và không thể chọn; ghế đã mua hiển thị đã đặt. Sơ đồ ghế cập nhật mỗi giây và đồng hồ đếm ngược hiển thị thời gian giữ còn lại.
+
+Mỗi lượt giữ tối đa 8 ghế trong **10 phút tính từ lần chọn đầu tiên**, theo đồng hồ máy chủ; nếu suất chiếu gần giờ đóng bán, thời hạn giữ kết thúc sớm hơn tại mốc 10 phút trước giờ chiếu. Thêm/bớt ghế không kéo dài thời hạn. Bỏ chọn, đổi suất hoặc đóng phần đặt vé sẽ yêu cầu nhả ghế; khi mất kết nối hoặc đóng trình duyệt, ghế vẫn tự hết hạn theo thời gian máy chủ. Hết hạn phải chọn lại trước khi thanh toán. Máy chủ xử lý tranh chấp ghế nguyên tử, nên hai người chọn đồng thời chỉ có một người giữ được ghế.
+
+Chạy `npm run db:init` để áp dụng migration giữ ghế, rồi khởi động lại server local. Kiểm tra bằng `npm run test:seat-holds` khi server đang mở; bộ test dùng dữ liệu QA riêng, gồm tranh chấp đồng thời, hết hạn, nhả ghế và thanh toán. Không xóa dữ liệu cũ để áp dụng thay đổi.
+
 ## Đánh giá phim sau khi xem
 
 Khách hàng có thể chấm **1–10 điểm** và viết nhận xét trong trang chi tiết phim sau khi vé của mình đã được nhân viên soát (`checked_in`) và suất chiếu đã kết thúc (giờ bắt đầu + thời lượng phim). Vé đã hủy, vé chưa soát hoặc phim vẫn đang chiếu chưa đủ điều kiện. Mỗi tài khoản khách hàng được gửi một đánh giá cho mỗi phim, kể cả khi mua nhiều vé hoặc xem nhiều lần; đánh giá đã gửi được giữ nguyên.

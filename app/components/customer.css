@@ -373,15 +373,23 @@
 .cv-seat-row > button { width: 28px; height: 27px; background: #302b3b; border: 1px solid #47404f; border-radius: 5px 5px 8px 8px; color: #bcb2c8; font-size: 9px; padding: 0; }
 .cv-seat-row > button:hover:not(:disabled) { border-color: #ff674d; color: var(--cv-accent); }
 .cv-seat-row > button.occupied { background: #201c29; border-color: #2a2434; color: #494050; opacity: 1; }
+.cv-seat-row > button.held { background: #664615; border-color: #b98732; color: #f5ce87; opacity: 1; cursor: not-allowed; }
 .cv-seat-row > button.selected { background: var(--cv-accent); border-color: #ff8771; color: white; }
 .cv-seat-row > .cv-seat-aisle { margin-right: 14px; }
 .cv-seat-row-label { width: 15px; text-align: center; font-size: 9px; color: #71667e; flex-shrink: 0; }
 .cv-seat-loading { padding: 55px 0; display: flex; align-items: center; flex-direction: column; gap: 14px; font-size: 10px; color: #8e839c; }
-.cv-seat-legend { display: flex; justify-content: center; gap: 19px; margin-top: 18px; }
+.cv-seat-legend { display: flex; justify-content: center; gap: 12px 19px; flex-wrap: wrap; margin-top: 18px; }
 .cv-seat-legend > span { display: flex; align-items: center; gap: 6px; font-size: 9px; color: #887d97; }
 .cv-seat-legend i { width: 12px; height: 12px; border: 1px solid #49404f; background: #302b3b; border-radius: 3px; }
 .cv-seat-legend i.selected { background: var(--cv-accent); border-color: var(--cv-accent); }
 .cv-seat-legend i.occupied { background: #201c29; border-color: #2a2434; }
+.cv-seat-legend i.held { background: #664615; border-color: #b98732; }
+.cv-hold-status { display: flex; align-items: center; gap: 9px; padding: 13px; margin-bottom: 18px; border: 1px solid #b987324a; border-radius: 9px; background: #b9873212; color: #e8c78f; font-size: 10px; line-height: 1.7; }
+.cv-hold-status > svg { flex-shrink: 0; }
+.cv-hold-status strong, .cv-hold-status small { display: block; }
+.cv-hold-status strong { font-size: 12px; font-variant-numeric: tabular-nums; }
+.cv-hold-status small { color: #b2a28b; font-size: 9px; }
+.cv-hold-status.urgent { color: #ff9a87; border-color: #ff674d70; background: #ff674d12; }
 .cv-selected-seats { display: flex; align-items: center; justify-content: space-between; border: 1px solid #332c3e; border-radius: 5px; padding: 11px 13px; margin-top: 22px; background: #1c1825; gap: 10px; }
 .cv-selected-seats > span { color: #8c819b; font-size: 10px; }
 .cv-selected-seats > strong { font-size: 11px; color: #bcb0c9; font-weight: 500; text-align: right; }

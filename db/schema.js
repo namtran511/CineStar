@@ -19,11 +19,23 @@ export const combos = sqliteTable("combos", { id: text("id").primaryKey(), name:
 export const promotions = sqliteTable("promotions", { id: text("id").primaryKey(), code: text("code").notNull().unique(), discountPercent: integer("discount_percent").notNull(), minTotal: integer("min_total").notNull(), active: integer("active", { mode: "boolean" }).notNull() });
 export const bookings = sqliteTable("bookings", {
     id: text("id").primaryKey(), userId: text("user_id").notNull().references(() => users.id), showtimeId: text("showtime_id").notNull().references(() => showtimes.id), seats: text("seats").notNull(), combos: text("combos").notNull(), total: integer("total").notNull(), code: text("code").notNull().unique(), status: text("status", { enum: ["paid", "cancelled", "checked_in"] }).notNull(), createdAt: text("created_at").notNull(), paymentMethod: text("payment_method").notNull(),
-    pointsSpent: integer("points_spent").notNull().default(0), pointsEarned: integer("points_earned").notNull().default(0), discountAmount: integer("discount_amount").notNull().default(0), birthdayYear: integer("birthday_year"), rewardId: text("reward_id"),
+    pointsSpent: integer("points_spent").notNull().default(0), pointsEarned: integer("points_earned").notNull().default(0), discountAmount: integer("discount_amount").notNull().default(0), birthdayYear: integer("birthday_year"), rewardId: text("reward_id"), seatHoldToken: text("seat_hold_token"),
 }, (t) => [index("bookings_user_idx").on(t.userId)]);
 export const bookedSeats = sqliteTable("booked_seats", {
     id: text("id").primaryKey(), bookingId: text("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }), showtimeId: text("showtime_id").notNull().references(() => showtimes.id), seat: text("seat").notNull(),
 }, (t) => [uniqueIndex("booked_seats_showtime_seat_unique").on(t.showtimeId, t.seat)]);
+export const seatHoldSessions = sqliteTable("seat_hold_sessions", {
+    id: text("id").primaryKey().notNull(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    showtimeId: text("showtime_id").notNull().references(() => showtimes.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at").notNull(), expiresAt: integer("expires_at").notNull(),
+}, (t) => [index("seat_hold_sessions_expiry_idx").on(t.expiresAt), check("seat_hold_sessions_deadline", sql`${t.expiresAt} > ${t.createdAt} AND ${t.expiresAt} <= ${t.createdAt} + 600000`)]);
+export const seatHolds = sqliteTable("seat_holds", {
+    id: text("id").primaryKey().notNull(),
+    holdToken: text("hold_token").notNull().references(() => seatHoldSessions.id, { onDelete: "cascade" }),
+    showtimeId: text("showtime_id").notNull().references(() => showtimes.id, { onDelete: "cascade" }),
+    seat: text("seat").notNull(),
+}, (t) => [uniqueIndex("seat_holds_showtime_seat_unique").on(t.showtimeId, t.seat), index("seat_holds_token_idx").on(t.holdToken)]);
 export const reviews = sqliteTable("reviews", {
     id: text("id").primaryKey(),
     userId: text("user_id").notNull().references(() => users.id, { onDelete: "restrict" }),

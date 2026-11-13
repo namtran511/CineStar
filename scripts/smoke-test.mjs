@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 
 const base = new URL(process.argv.find(arg => /^https?:\/\//.test(arg)) || "http://localhost:5173");
 if (!["localhost", "127.0.0.1", "[::1]"].includes(base.hostname)) throw new Error("Smoke tests may only target a local development server.");
@@ -16,6 +17,14 @@ async function call(path, { method = "GET", body, cookie = "" } = {}) {
 async function login(email) { const result = await call("/api/auth/login", { method: "POST", body: { email, password: "Demo@123" } }); check(result.status === 200 && result.cookie, `Đăng nhập ${email}`); check(/HttpOnly/i.test(result.headers.get("set-cookie")) && /SameSite=Lax/i.test(result.headers.get("set-cookie")), "Session cookie có HttpOnly và SameSite"); return result; }
 async function register(label) { const result = await call("/api/auth/register", { method: "POST", body: { name: `Smoke ${label} ${stamp}`, email: `smoke-${label}-${stamp}@cineverse.test`, password: "SmokeTest@123", role: "admin", birthDate: "2000-01-15" } }); check(result.status === 200 && result.body.user.role === "user", "Đăng ký luôn tạo người dùng thường"); cleanup.users.push(result.body.user.id); return result; }
 async function create(resource, data, cookie) { const result = await call(`/api/admin/${resource}`, { method: "POST", cookie, body: data }); const key = { movies: "movie", rooms: "room", showtimes: "showtime", combos: "combo", promotions: "promotion" }[resource]; check(result.status === 201 && result.body[key]?.id, `Admin tạo ${resource}`); cleanup[resource].push(result.body[key].id); return result.body[key]; }
+async function book(cookie, body) {
+  const holdToken = randomUUID();
+  const path = `/api/showtimes/${body.showtimeId}/seats`;
+  const held = await call(path, { method: "PUT", cookie, body: { holdToken, seats: body.seats } });
+  if (held.status !== 200) return held;
+  try { return await call("/api/bookings", { method: "POST", cookie, body: { ...body, holdToken } }); }
+  finally { await call(path, { method: "DELETE", cookie, body: { holdToken } }); }
+}
 
 try {
   const bootstrap = await call("/api/bootstrap");
@@ -39,21 +48,21 @@ try {
   const combo = await create("combos", { name: "Smoke Combo", description: "Combo kiểm thử", price: 15000, image: "/images/combo-solo.svg" }, admin.cookie);
   const promo = await create("promotions", { code: `QA${stamp}`, discountPercent: 10, minTotal: 0, active: true }, admin.cookie);
   const order = { showtimeId: showtime.id, seats: ["A1"], combos: [{ id: combo.id, qty: 2 }], promotionCode: promo.code, paymentMethod: "bank", total: 1, price: 1 };
-  const bought = await call("/api/bookings", { method: "POST", cookie: own.cookie, body: order });
+  const bought = await book(own.cookie, order);
   check(bought.status === 201 && bought.body.booking.total === 66600 && bought.body.booking.status === "paid", "Máy chủ tính 44.000 + 2×15.000 giảm 10%, bỏ qua tổng giả mạo");
   const bookingId = bought.body.booking.id;
   check((await call(`/api/showtimes/${showtime.id}/seats`)).body.occupied.includes("A1"), "Vé đã đặt khóa ghế trong D1");
-  check((await call("/api/bookings", { method: "POST", cookie: other.cookie, body: order })).status === 409, "Ghế bị trùng trả 409");
+  check((await book(other.cookie, order)).status === 409, "Ghế bị trùng trả 409");
   check(!(await call("/api/bookings", { cookie: other.cookie })).body.bookings.some(b => b.id === bookingId), "Người dùng không đọc vé của người khác");
   check((await call(`/api/bookings/${bookingId}`, { method: "PATCH", cookie: other.cookie, body: { action: "cancel" } })).status === 403, "Người dùng không hủy vé của người khác");
   check((await call(`/api/bookings/${bookingId}`, { method: "PATCH", cookie: own.cookie, body: { action: "checkin" } })).status === 403, "Người dùng không tự soát vé");
   check((await call(`/api/bookings/${bookingId}`, { method: "PATCH", cookie: staff.cookie, body: { action: "checkin" } })).status === 400, "Nhân viên phải tuân thủ thời gian soát vé");
   check((await call(`/api/bookings/${bookingId}`, { method: "PATCH", cookie: own.cookie, body: { action: "cancel" } })).body.booking.status === "cancelled", "Người mua hủy vé trước giờ chiếu");
   check(!(await call(`/api/showtimes/${showtime.id}/seats`)).body.occupied.includes("A1"), "Hủy vé giải phóng ghế");
-  const reused = await call("/api/bookings", { method: "POST", cookie: own.cookie, body: { ...order, combos: [], promotionCode: undefined } });
+  const reused = await book(own.cookie, { ...order, combos: [], promotionCode: undefined });
   check(reused.status === 201 && reused.body.booking.total === 44000, "Ghế hủy có thể đặt lại đúng giá");
   await call(`/api/bookings/${reused.body.booking.id}`, { method: "PATCH", cookie: own.cookie, body: { action: "cancel" } });
-  const race = await Promise.all([own, other].map(session => call("/api/bookings", { method: "POST", cookie: session.cookie, body: { ...order, seats: ["B1"], combos: [], promotionCode: undefined } })));
+  const race = await Promise.all([own, other].map(session => book(session.cookie, { ...order, seats: ["B1"], combos: [], promotionCode: undefined })));
   check(race.filter(result => result.status === 201).length === 1 && race.filter(result => result.status === 409).length === 1, "Hai yêu cầu đồng thời chỉ bán ghế một lần");
   const currentOrders = (await call("/api/bookings", { cookie: admin.cookie })).body.bookings.filter(b => b.showtimeId === showtime.id);
   check(currentOrders.length === 3 && currentOrders.filter(b => b.status === "paid").length === 1, "Giao dịch thất bại không để lại đơn vé mồ côi");

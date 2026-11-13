@@ -121,6 +121,8 @@ erDiagram
 
 Ghế được tính từ số hàng/cột của phòng (A1, A2…). Ràng buộc duy nhất `(showtime_id, seat)` ngăn hai vé cùng ghế. `bookings.seats` và `bookings.combos` là bản ghi lựa chọn của đơn dưới dạng JSON. Khi hủy, hệ thống giữ đơn để tra cứu và giải phóng các ghế trong `booked_seats`.
 
+Trước khi mua vé, `seat_hold_sessions` lưu người giữ, suất chiếu và hạn giữ theo đồng hồ máy chủ; `seat_holds` lưu các ghế của lượt giữ, với ràng buộc duy nhất `(showtime_id, seat)`. Chọn ghế gửi yêu cầu giữ ngay. Hạn giữ tối đa 10 phút từ ghế đầu tiên, không gia hạn khi thêm/bớt ghế. Sơ đồ cập nhật mỗi giây, phân biệt ghế trống, ghế của bạn, ghế người khác đang giữ và ghế đã mua. Thanh toán chỉ chấp nhận ghế do đúng tài khoản/lượt giữ sở hữu và còn hạn; việc tạo vé và chuyển ghế sang `booked_seats` thực hiện nguyên tử. Ghế hết hạn được coi là trống mà không cần chờ người giữ mở lại trang.
+
 ## Quy tắc nghiệp vụ
 
 1. Mỗi đơn có 1–8 ghế, ghế phải thuộc phòng chiếu, không trùng và chưa được đặt.
@@ -132,6 +134,7 @@ Ghế được tính từ số hàng/cột của phòng (A1, A2…). Ràng buộ
 7. Lịch chiếu cùng phòng không chồng lấn; cần 15 phút dọn phòng sau thời lượng phim.
 8. Suất đã có vé không đổi lịch/giá; dữ liệu có khóa ngoại đang sử dụng không thể xóa. Không thu nhỏ phòng đến mức loại bỏ ghế đã bán.
 9. Đăng ký mới luôn có vai trò người dùng. Chỉ admin đổi vai trò; luôn giữ ít nhất một admin.
+10. Khách và nhân viên giữ ghế ngay lúc chọn, tối đa 10 phút. Bỏ chọn, đổi suất hoặc đóng phần đặt vé yêu cầu nhả ghế; mất kết nối vẫn có hạn tự nhả phía máy chủ. Hết hạn phải chọn lại trước khi thanh toán.
 
 ## AI giới hạn trong CSDL
 
@@ -144,7 +147,7 @@ Không cho mô hình thực thi SQL. Câu hỏi ngoài phạm vi hoặc yêu c�
 ## Kịch bản bảo vệ đồ án
 
 1. Mở trang khách; lọc thể loại, xem chi tiết một phim và lịch chiếu.
-2. Đăng nhập khách, chọn suất còn xa giờ chiếu, đặt A1/A2, thêm combo, áp dụng WELCOME10, thanh toán giả lập.
+2. Đăng nhập khách, chọn suất còn xa giờ chiếu và chọn A1/A2. Trước khi thanh toán, mở cùng suất bằng tài khoản khác để thấy ghế đang được giữ và không chọn được; bỏ chọn một ghế để thấy tài khoản kia được cập nhật. Sau đó thêm combo, áp dụng WELCOME10 và thanh toán giả lập.
 3. Mở Vé của tôi: kiểm tra mã đơn và ghế.
 4. Đăng nhập khách khác và mở cùng suất: A1/A2 bị khóa; máy chủ cũng từ chối nếu gửi yêu cầu đặt trùng.
 5. Hủy vé trước 60 phút; mở lại sơ đồ ghế để thấy ghế được giải phóng.
@@ -156,4 +159,4 @@ Không cho mô hình thực thi SQL. Câu hỏi ngoài phạm vi hoặc yêu c�
 
 ## Hướng mở rộng
 
-Thông tin chi nhánh; quản lý tồn kho combo; trạng thái giữ ghế có thời hạn; đánh giá phim; suất chiếu định kỳ; phân quyền chi tiết; xuất báo cáo; gửi vé qua email; thanh toán thật khi có môi trường phù hợp. Bản hiện tại không có chức năng giữ ghế tạm: ghế được quyết định chính thức khi hoàn thành thanh toán giả lập.
+Thông tin chi nhánh; quản lý tồn kho combo; suất chiếu định kỳ; phân quyền chi tiết; gửi vé qua email; thanh toán thật khi có môi trường phù hợp. Giữ ghế có thời hạn, đánh giá phim và xuất báo cáo đã có trong bản hiện tại.

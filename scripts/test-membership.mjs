@@ -50,9 +50,17 @@ async function create(resource, body, cookie) {
   return response.body[key];
 }
 async function book(user, showtime, seats, extras = {}) {
-  const response = await call("/api/bookings", { method: "POST", cookie: user.cookie, body: { showtimeId: showtime.id, seats, combos: [], paymentMethod: "momo", ...extras } });
-  if (response.body.booking?.id) fixtures.bookings.push(response.body.booking.id);
-  return response;
+  const holdToken = randomUUID();
+  const path = `/api/showtimes/${showtime.id}/seats`;
+  const held = await call(path, { method: "PUT", cookie: user.cookie, body: { holdToken, seats } });
+  if (held.status !== 200) return held;
+  try {
+    const response = await call("/api/bookings", { method: "POST", cookie: user.cookie, body: { showtimeId: showtime.id, holdToken, seats, combos: [], paymentMethod: "momo", ...extras } });
+    if (response.body.booking?.id) fixtures.bookings.push(response.body.booking.id);
+    return response;
+  } finally {
+    await call(path, { method: "DELETE", cookie: user.cookie, body: { holdToken } });
+  }
 }
 async function membership(user) {
   const result = await call("/api/membership/me", { cookie: user.cookie });

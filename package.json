@@ -19,6 +19,7 @@
     "check": "node scripts/check-javascript.mjs",
     "test:smoke": "node scripts/smoke-test.mjs --cleanup-local-db",
     "test:checkin": "node scripts/test-checkin.mjs --cleanup-local-db",
+    "test:seat-holds": "node scripts/test-seat-holds.mjs",
     "test:reviews": "node scripts/test-reviews.mjs",
     "test:membership": "node scripts/test-membership.mjs",
     "test:ai": "node scripts/test-ai.mjs",

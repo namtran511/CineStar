@@ -36,6 +36,20 @@
       "when": 1791599697593,
       "tag": "0004_audit_insert_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794540982084,
+      "tag": "0005_typical_proemial_gods",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794541434256,
+      "tag": "0006_seat_hold_admin_guards",
+      "breakpoints": true
     }
   ]
 }

@@ -228,12 +228,20 @@
 .mg-seat:hover:not(:disabled) { background:#41414d; border-color:#ff856d; color:#ffe9e4; }
 .mg-seat.selected { background:#ff674d; border-color:#ff876e; color:#fff; box-shadow:0 2px 9px #ff674d25; }
 .mg-seat.taken { color:#333948; background:#1c202a; border-color:#262b35; }
-.mg-seat:disabled:not(.taken):not(.selected) { opacity:.4!important; }
-.mg-seat-legend { display:flex; gap:20px; align-items:center; justify-content:center; padding:8px 0 16px; }
+.mg-seat.held { color:#f5ce87; background:#664615; border-color:#b98732; cursor:not-allowed; }
+.mg-seat:disabled:not(.taken):not(.selected):not(.held) { opacity:.4!important; }
+.mg-seat-legend { display:flex; gap:10px 20px; flex-wrap:wrap; align-items:center; justify-content:center; padding:8px 0 16px; }
 .mg-seat-legend>span { display:flex; align-items:center; gap:6px; font-size:9px; color:#8290a8; }
 .mg-seat-legend i { width:10px; height:10px; border-radius:3px; background:#2d3340; border:1px solid #424b5a; }
 .mg-seat-legend i.selected { background:#ff674d; border-color:#ff856d; }
 .mg-seat-legend i.taken { background:#1c202a; border-color:#262b35; }
+.mg-seat-legend i.held { background:#664615; border-color:#b98732; }
+.mg-hold-status { display:flex; align-items:center; gap:9px; margin:18px 20px 0; padding:12px; border:1px solid #b987324a; border-radius:9px; background:#b9873212; color:#e8c78f; font-size:10px; line-height:1.7; }
+.mg-hold-status>svg { flex-shrink:0; }
+.mg-hold-status strong,.mg-hold-status small { display:block; }
+.mg-hold-status strong { font-size:12px; font-variant-numeric:tabular-nums; }
+.mg-hold-status small { color:#a79b88; font-size:9px; }
+.mg-hold-status.urgent { color:#ff9a87; border-color:#ff674d70; background:#ff674d12; }
 .mg-pos-hint { text-align:center; padding:0 18px 20px; font-size:9px; color:#617089; }
 .mg-optional { font-weight:400; font-size:9px; color:#6a7890; margin-left:6px; }
 .mg-pos-combo { margin:0 23px; border-top:1px solid #2a303d; padding:17px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; }
