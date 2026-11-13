@@ -4,8 +4,14 @@
   "compatibility_date": "2026-05-15",
   "compatibility_flags": ["nodejs_compat"],
   "keep_vars": true,
+  "routes": [{ "pattern": "starstart.world", "zone_name": "starstart.world", "custom_domain": true }],
   "triggers": { "crons": ["*/5 * * * *"] },
-  "vars": { "APP_ENV": "production", "GEMINI_MODEL": "gemini-2.5-flash" },
+  "vars": {
+    "APP_ENV": "production",
+    "APP_URL": "https://starstart.world",
+    "EMAIL_FROM": "CineStar <no-reply@starstart.world>",
+    "GEMINI_MODEL": "gemini-2.5-flash"
+  },
   "d1_databases": [{
     "binding": "DB",
     "database_name": "cinestar-db",
