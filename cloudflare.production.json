@@ -4,6 +4,8 @@
   "compatibility_date": "2026-05-15",
   "compatibility_flags": ["nodejs_compat"],
   "keep_vars": true,
+  "workers_dev": true,
+  "preview_urls": true,
   "routes": [{ "pattern": "starstart.world", "zone_name": "starstart.world", "custom_domain": true }],
   "triggers": { "crons": ["*/5 * * * *"] },
   "vars": {
