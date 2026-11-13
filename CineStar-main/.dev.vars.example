@@ -1,0 +1,17 @@
+# Copy this file to .dev.vars for local Cloudflare/Vinext development.
+# Store the real key only in .dev.vars (ignored by Git) or hosting secrets.
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
+
+# Public browser token (pk.), never a secret Mapbox token (sk.).
+MAPBOX_PUBLIC_TOKEN=
+# Optional overrides for the cinema location shown in the footer.
+CINEMA_NAME=
+CINEMA_ADDRESS=
+CINEMA_LONGITUDE=
+CINEMA_LATITUDE=
+
+# Public footer contact details. Leave empty until real channels are available.
+CINEMA_EMAIL=
+CINEMA_FACEBOOK_URL=
+CINEMA_PHONE=

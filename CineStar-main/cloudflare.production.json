@@ -1,0 +1,14 @@
+{
+  "name": "cinestar",
+  "main": "./build/sites-worker.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "keep_vars": true,
+  "vars": { "APP_ENV": "production", "GEMINI_MODEL": "gemini-2.5-flash" },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "cinestar-db",
+    "database_id": "5e8611af-7885-4481-a38a-8ea58e8d31a2",
+    "migrations_dir": "drizzle"
+  }]
+}
