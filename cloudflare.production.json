@@ -11,6 +11,10 @@
   "vars": {
     "APP_ENV": "production",
     "APP_URL": "https://starstart.world",
+    "PAYMENT_MODE": "sepay",
+    "SEPAY_BANK": "MBBank",
+    "SEPAY_ACCOUNT_NUMBER": "0386492164",
+    "SEPAY_ACCOUNT_NAME": "TRAN VE NAM",
     "EMAIL_FROM": "CineStar <no-reply@starstart.world>",
     "GEMINI_MODEL": "gemini-2.5-flash"
   },

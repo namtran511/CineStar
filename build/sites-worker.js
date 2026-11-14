@@ -1,6 +1,7 @@
 import handler from "vinext/server/fetch-handler";
 import { runWithConnectorBinding } from "../lib/connector-context";
 import { runEmailJobs } from '../lib/server/email-jobs';
+import { expirePendingPayments } from '../lib/server/sepay';
 export default {
     async fetch(request, env, ctx) {
         let binding = ctx.props?.CONNECTORS;
@@ -30,6 +31,6 @@ export default {
         return response;
     },
     async scheduled(_controller, env, ctx) {
-        ctx.waitUntil(runEmailJobs(env));
+        ctx.waitUntil((async () => { await expirePendingPayments(env.DB); await runEmailJobs(env); })());
     },
 };

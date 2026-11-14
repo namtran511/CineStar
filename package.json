@@ -17,6 +17,7 @@
     "db:generate": "drizzle-kit generate",
     "db:init": "node scripts/init-db.mjs",
     "email:setup": "node scripts/setup-email.mjs",
+    "sepay:setup": "node scripts/setup-sepay.mjs",
     "check": "node scripts/check-javascript.mjs",
     "test:smoke": "node scripts/smoke-test.mjs --cleanup-local-db",
     "test:checkin": "node scripts/test-checkin.mjs --cleanup-local-db",
@@ -25,6 +26,8 @@
     "test:membership": "node scripts/test-membership.mjs",
     "test:ai": "node scripts/test-ai.mjs",
     "test:email": "node scripts/test-email.mjs",
+    "test:sepay": "node scripts/test-sepay.mjs",
+    "test:sepay-api": "node scripts/test-sepay-api.mjs",
     "test:analytics": "node scripts/test-analytics.mjs",
     "test:audit": "node scripts/test-member-audit.mjs",
     "launch": "node scripts/launch.mjs"

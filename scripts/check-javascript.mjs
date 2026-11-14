@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { parse } from "espree";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const excluded = new Set(["node_modules", ".git", ".next", ".vinext", ".wrangler", ".sites-runtime", ".agents", ".codex", "dist", "out", "outputs", "work", "public", "vendor"]);
+const excluded = new Set(["node_modules", ".tools", ".git", ".next", ".vinext", ".wrangler", ".sites-runtime", ".agents", ".codex", "dist", "out", "outputs", "work", "public", "vendor"]);
 const extensions = [".js", ".jsx", ".mjs", ".cjs", ".json", ".css"];
 function files(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {

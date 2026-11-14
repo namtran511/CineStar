@@ -23,3 +23,12 @@ EMAIL_FROM=
 # A random secret of at least 32 characters, used to protect verification codes.
 EMAIL_CODE_SECRET=
 APP_URL=http://localhost:5173
+
+# Use `npm run sepay:setup` to prepare local QR payments and a random secret.
+# Production always requires real SePay (never simulated customer payments).
+PAYMENT_MODE=demo
+SEPAY_BANK=
+SEPAY_ACCOUNT_NUMBER=
+SEPAY_ACCOUNT_NAME=
+# Same HMAC-SHA256 secret in SePay webhook and Cloudflare runtime Secrets.
+SEPAY_WEBHOOK_SECRET=

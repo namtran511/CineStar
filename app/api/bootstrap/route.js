@@ -4,4 +4,5 @@ import { getEnv } from "@/lib/server/db";
 import { api } from "@/lib/server/http";
 import { publicCinemaLocation } from "@/lib/cinema-location";
 import { getMembership } from "@/lib/server/membership";
-export const GET = api(async (request) => { const [catalog, user] = await Promise.all([getCatalog(), getUser(request)]); return Response.json({ ...catalog, user, membership: await getMembership(user), demoAccountsEnabled: getEnv().APP_ENV !== "production", aiConfigured: Boolean(getEnv().GEMINI_API_KEY), cinema: publicCinemaLocation(getEnv()) }); });
+import { publicPaymentConfiguration } from "@/lib/server/sepay";
+export const GET = api(async (request) => { const [catalog, user] = await Promise.all([getCatalog(), getUser(request)]); return Response.json({ ...catalog, user, membership: await getMembership(user), payment: publicPaymentConfiguration(getEnv()), demoAccountsEnabled: getEnv().APP_ENV !== "production", aiConfigured: Boolean(getEnv().GEMINI_API_KEY), cinema: publicCinemaLocation(getEnv()) }); });

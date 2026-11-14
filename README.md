@@ -1,5 +1,7 @@
 # CineStar
 
+Thanh toán VietQR qua SePay: xem [cấu hình webhook, Secrets và kiểm thử](docs/SEPAY.md).
+
 Deploy GitHub → Cloudflare Workers: xem [hướng dẫn triển khai](docs/DEPLOY-CLOUDFLARE.md).
 
 Đồ án website quản lý rạp chiếu phim, giao diện tối, tiếng Việt, ba vai trò **admin / nhân viên / người dùng**. Có đặt vé chọn ghế, combo, ưu đãi, thanh toán giả lập, soát vé, thống kê và trợ lý gợi ý Gemini giới hạn trong CSDL.
