@@ -4,6 +4,7 @@ import hostingConfig from "./.openai/hosting.json";
 import { readExecutionProfile } from "./scripts/execution-profile.mjs";
 import { sites } from "./build/sites-vite-plugin";
 import { connectorPreview } from "./build/connector-preview-plugin.mjs";
+import { unstable_getVarsForDev } from "wrangler";
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID = "00000000-0000-4000-8000-000000000000";
 const { d1, r2 } = hostingConfig;
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
@@ -43,6 +44,12 @@ export default defineConfig(async ({ command }) => {
     process.env.MINIFLARE_REGISTRY_PATH ??= ".wrangler/registry";
     // Wrangler snapshots its log path while the Cloudflare plugin is imported.
     const { cloudflare } = await import("@cloudflare/vite-plugin");
+    // This project supplies an inline Worker config. Explicitly attach local
+    // .dev.vars at dev time; Wrangler otherwise resolves them beside its
+    // generated config and the Worker receives no email credentials.
+    const localVars = command === "serve" && !productionDeploy
+        ? Object.fromEntries(Object.entries(unstable_getVarsForDev(undefined, undefined, {}, undefined, false)).map(([key, binding]) => [key, binding.value]))
+        : {};
     return {
         server: {
             ...(managedLinux
@@ -61,7 +68,7 @@ export default defineConfig(async ({ command }) => {
                 viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
                 inspectorPort: false,
                 config: {
-                    ...(productionDeploy ? {} : localBindingConfig),
+                    ...(productionDeploy ? {} : { ...localBindingConfig, vars: localVars }),
                     ...(command === "serve"
                         ? {
                             services: [

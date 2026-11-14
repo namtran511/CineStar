@@ -118,6 +118,15 @@
 .mg-result-count { font-size:10px; color:#687186; margin-left:auto; }
 .mg-booking-guidance { display:flex; align-items:flex-start; gap:9px; padding:11px 14px; margin-bottom:17px; border:1px solid #273142; color:#8a9bb5; background:#14202f55; border-radius:7px; font-size:10px; }
 .mg-booking-guidance>svg { flex-shrink:0; }
+.mg-cancel-showtime { margin-bottom:17px; padding:18px; }
+.mg-cancel-showtime h2 { margin:0 0 7px; font-size:15px; color:#f3f5fa; }
+.mg-cancel-showtime p { margin:0; color:#9aa7bd; font-size:11px; line-height:1.7; }
+.mg-cancel-showtime-actions { display:flex; align-items:end; gap:10px; margin-top:16px; }
+.mg-cancel-showtime-actions .mg-field { flex:1; }
+.mg-cancel-showtime-preview { margin-top:15px; padding:14px; border:1px solid #58443f; border-radius:8px; background:#221a1b; }
+.mg-cancel-showtime-preview strong { color:#fff; font-size:12px; }
+.mg-cancel-showtime-preview p { margin:5px 0 12px; }
+@media(max-width:540px) { .mg-cancel-showtime-actions { flex-direction:column; align-items:stretch; } }
 .mg-row-actions,.mg-booking-actions { display:flex; gap:4px; align-items:center; }
 .mg-small-button { padding:7px 9px; display:inline-flex; align-items:center; gap:6px; border:1px solid #363c49; background:#20242e; color:#c1c9d7; border-radius:5px; font-size:9px!important; white-space:nowrap; }
 .mg-small-button:hover:not(:disabled) { border-color:#697182; background:#2a2e3a; }

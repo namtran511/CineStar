@@ -81,5 +81,5 @@ export const membershipBirthdayClaims = sqliteTable("membership_birthday_claims"
     userId: text("user_id").notNull().references(() => users.id), birthdayYear: integer("birthday_year").notNull(), bookingId: text("booking_id").notNull().unique().references(() => bookings.id),
 }, (t) => [uniqueIndex("membership_birthday_claims_user_year_unique").on(t.userId, t.birthdayYear)]);
 export const membershipRewardClaims = sqliteTable("membership_reward_claims", {
-    rewardId: text("reward_id").primaryKey().references(() => membershipRewards.id), bookingId: text("booking_id").notNull().unique().references(() => bookings.id),
-});
+    rewardId: text("reward_id").primaryKey().references(() => membershipRewards.id), bookingId: text("booking_id").notNull().references(() => bookings.id),
+}, (t) => [index("membership_reward_claims_booking_id_idx").on(t.bookingId)]);
