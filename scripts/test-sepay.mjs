@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync, readdirSync } from "node:fs";
 import { createHmac } from "node:crypto";
-import { paymentConfiguration, publicPaymentConfiguration, paymentInstructions, verifySePaySignature, validSePayPayload, settleSePayTransaction, expirePendingPayments } from "../lib/server/sepay.js";
+import { paymentConfiguration, publicPaymentConfiguration, paymentInstructions, verifySePaySignature, validSePayPayload, isSePayTestPayload, settleSePayTransaction, expirePendingPayments } from "../lib/server/sepay.js";
 import { notificationContent } from "../lib/server/email-jobs.js";
 
 // In-memory SQLite applies every real migration, including seat, email and audit
@@ -73,6 +73,12 @@ const instructions = paymentInstructions(sqlite.prepare("SELECT * FROM bookings 
 const qr = new URL(instructions.qrUrl);
 check(qr.searchParams.get("des") === first.code && qr.searchParams.get("amount") === "100000" && qr.searchParams.get("acc") === config.account, "QR carries server amount, order code and receiver snapshot");
 const success = payload(first);
+const probe = { ...success, id: 0 };
+check(isSePayTestPayload(probe) && !validSePayPayload(probe), "dashboard mock ID zero is recognized only as a connectivity test");
+check(!isSePayTestPayload({ id: 0 }) && !isSePayTestPayload({ ...probe, transferAmount: -1 }), "malformed mock payloads are still rejected");
+check(!isSePayTestPayload({ ...success, id: -1 }) && !isSePayTestPayload({ ...success, id: "0" }), "invalid transaction IDs cannot become test probes");
+await assert.rejects(receive(probe), /Invalid SePay payload/);
+check(status(first) === "pending" && count("SELECT count(*) n FROM payment_events") === 0, "mock receipt cannot settle an order or enter the transaction ledger");
 check((await receive(success)).outcome === "paid" && status(first) === "paid", "matching bank transfer marks the pending order paid");
 check(count("SELECT count(*) n FROM email_outbox WHERE kind='booking'") === 1, "settlement queues exactly one ticket email");
 const audits = count("SELECT count(*) n FROM audit_logs");

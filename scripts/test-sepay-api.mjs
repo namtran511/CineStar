@@ -75,6 +75,12 @@ try {
     check(conflict.status === 409,"another customer cannot reserve a pending-payment seat");
     check((await webhook(booking,{}, {badSecret:true})).result.status === 401,"webhook rejects a forged signature");
     check((await webhook(booking,{}, {timestampOffset:-301})).result.status === 401,"webhook rejects an expired signature");
+    check((await webhook(booking,{id:0}, {badSecret:true})).result.status === 401,"dashboard test probes still require a valid signature");
+    const probe=await webhook(booking,{id:0});
+    check(probe.result.status === 200 && probe.result.body.success && probe.result.body.outcome === "test_received","signed dashboard mock ID zero receives a successful connectivity acknowledgement");
+    check((await call(`/api/bookings/${booking.id}`,{cookie:owner.cookie})).body.booking.status === "pending","a test probe matching a real order never issues a ticket");
+    check(execute("SELECT COUNT(*) AS total FROM payment_events WHERE transaction_id='0'")[0].total === 0,"dashboard test probes never enter the payment ledger");
+    check((await webhook(booking,{id:0,transferAmount:-1})).result.status === 400,"malformed signed test probes are rejected");
     check((await webhook(booking,{transferAmount:1})).result.body.outcome === "amount_mismatch","validly signed underpayment is recorded without issuing a ticket");
     check((await call(`/api/bookings/${booking.id}`,{cookie:owner.cookie})).body.booking.status === "pending","underpaid order remains pending");
     const settled=await webhook(booking);

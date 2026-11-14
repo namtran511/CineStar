@@ -84,7 +84,7 @@ node scripts/test-sepay-api.mjs
 npm run test:email
 ```
 
-Trong Live, nút Gửi thử trên SePay có thể tạo dữ liệu mẫu không khớp đơn: endpoint vẫn xác nhận đã nhận và ghi lại `unmatched`/`wrong_account`, không phát hành vé. Sau đó kiểm tra một đơn thật do bạn tạo: QR đúng người nhận, số tiền, mã đơn; chỉ tự chuyển tiền khi bạn chủ động quyết định thử giao dịch thật. Sau chuyển khoản, đơn tự đổi sang đã thanh toán và có thể xuất vé. Không có nút khách tự xác nhận đã trả tiền.
+Trong Live, nút Gửi thử trên SePay thường gửi ID giao dịch mẫu bằng `0`. Với bản tin mẫu đúng cấu trúc và chữ ký HMAC hợp lệ, endpoint trả `{"success":true,"outcome":"test_received"}` để xác nhận kết nối, không ghi giao dịch, không đổi trạng thái đơn và không phát hành vé. Bản tin không có chữ ký hợp lệ vẫn bị từ chối. Nếu dữ liệu mẫu dùng ID dương, các điều kiện khớp giao dịch thông thường vẫn áp dụng. Sau đó kiểm tra một đơn thật do bạn tạo: QR đúng người nhận, số tiền, mã đơn; chỉ tự chuyển tiền khi bạn chủ động quyết định thử giao dịch thật. Sau chuyển khoản, đơn tự đổi sang đã thanh toán và có thể xuất vé. Không có nút khách tự xác nhận đã trả tiền.
 
 ## 5. Đối soát và hoàn tiền
 
