@@ -5,6 +5,7 @@ import CustomerApp from "./components/CustomerApp";
 import ManagementApp from "./components/ManagementApp";
 import { vietnamToday } from "@/lib/membership-rules";
 import EmailVerification from './components/EmailVerification';
+import './policies/policies.css';
 export default function Home() {
     const [data, setData] = useState(null);
     const [error, setError] = useState("");
@@ -18,8 +19,7 @@ export default function Home() {
     const [name, setName] = useState("");
     const [birthDate, setBirthDate] = useState("");
     const [challenge, setChallenge] = useState(null);
-    const [marketing, setMarketing] = useState(false);
-    const [birthday, setBirthday] = useState(false);
+    const [acceptedPolicies, setAcceptedPolicies] = useState(false);
     const refresh = useCallback(async () => {
         const response = await fetch("/api/bootstrap", { cache: "no-store" });
         const result = await response.json();
@@ -44,7 +44,7 @@ export default function Home() {
         setBusy(true);
         setAuthError("");
         try {
-            const response = await fetch(`/api/auth/${register ? "register" : "login"}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, ...(register ? { name, birthDate, marketing, birthday } : {}) }) });
+            const response = await fetch(`/api/auth/${register ? "register" : "login"}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, ...(register ? { name, birthDate, acceptedPolicies } : {}) }) });
             const result = await response.json();
             if (!response.ok)
                 throw new Error(result.error || "Đăng nhập thất bại.");
@@ -85,7 +85,7 @@ export default function Home() {
         <label>Email<input id="auth-email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="ban@example.com"/></label>
         <label>Mật khẩu<input type="password" autoComplete={register ? "new-password" : "current-password"} required minLength={8} value={password} onChange={e => setPassword(e.target.value)} placeholder="Tối thiểu 8 ký tự"/></label>
         {register && <label>Ngày sinh<input type="date" autoComplete="bday" min="1900-01-01" max={vietnamToday()} required value={birthDate} onChange={e => setBirthDate(e.target.value)}/><small>Nhập chính xác để nhận ưu đãi sinh nhật. Bạn chỉ được nhập một lần; cần sửa vui lòng liên hệ nhân viên hoặc admin.</small></label>}
-        {register && <><label className="email-check"><input type="checkbox" checked={marketing} onChange={e=>setMarketing(e.target.checked)}/>Tôi muốn nhận email về ưu đãi mới.</label><label className="email-check"><input type="checkbox" checked={birthday} onChange={e=>setBirthday(e.target.checked)}/>Tôi muốn nhận lời chúc và ưu đãi sinh nhật qua email.</label><small>Chúng tôi gửi mã xác minh và thông báo liên quan đến vé đến email của bạn.</small></>}
+        {register && <label className="email-check auth-policy-consent"><input type="checkbox" required checked={acceptedPolicies} onChange={e=>setAcceptedPolicies(e.target.checked)}/><span>Tôi đã đọc và đồng ý với <a href="/policies" target="_blank" rel="noopener noreferrer">các chính sách của CineStar</a> và <a href="/policies/notifications" target="_blank" rel="noopener noreferrer">Chính sách thông báo qua email</a>, bao gồm nhận mã xác minh, thông báo vé, sự cố, ưu đãi và lời chúc sinh nhật. Tôi có thể ngừng nhận email ưu đãi và sinh nhật qua liên kết trong email.</span></label>}
         {authError && <p className="form-error" role="alert">{authError}</p>}<button className="primary" type="submit" disabled={busy}>{busy ? <LoaderCircle className="spin" size={18}/> : <>{register ? "Gửi mã xác minh" : "Đăng nhập"}<ArrowRight size={18}/></>}</button>
       </form>}<p className="auth-toggle">{register ? "Đã có tài khoản?" : "Chưa có tài khoản?"} <button disabled={busy} onClick={() => { setRegister(!register); setAuthError(""); setChallenge(null); }}>{register ? "Đăng nhập" : "Đăng ký ngay"}</button></p>
       {!register && data.demoAccountsEnabled && <div className="demo-accounts"><span>TRẢI NGHIỆM BA VAI TRÒ</span><div>{[{ role: "user", label: "Khách hàng", icon: UserRound }, { role: "staff", label: "Nhân viên", icon: BadgeCheck }, { role: "admin", label: "Admin", icon: ShieldCheck }].map(item => <button key={item.role} type="button" disabled={busy} onClick={() => { setEmail(`${item.role}@cineverse.vn`); setPassword("Demo@123"); }}><item.icon size={17}/>{item.label}</button>)}</div><small>Chọn vai trò để điền tài khoản demo · mật khẩu Demo@123</small></div>}

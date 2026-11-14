@@ -61,9 +61,11 @@
 .cv-footer-address p { margin-top: 4px; font-size: 10px; color: #9798a5; line-height: 1.7; }
 .cv-footer-address a { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; font-size: 10px; color: #ff8a73; }
 .cv-footer-address a:hover { text-decoration: underline; }
-.cv-footer-bottom { display: flex; justify-content: space-between; align-items: center; gap: 15px; color: #8a8a97; font-size: 9px; padding: 21px 0 25px; border-top: 1px solid #24242c; }
+.cv-footer-policies { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 20px 0; border-top: 1px solid #24242c; font-size: 11px; }
+.cv-footer-policies a { color: #bfc0ca; }
+.cv-footer-policies a:hover { color: #ff9b88; text-decoration: underline; }
+.cv-footer-bottom { display: flex; justify-content: space-between; align-items: center; gap: 15px; color: #8a8a97; font-size: 9px; padding: 15px 0 25px; border-top: 1px solid #24242c; }
 .cv-footer-bottom > span:nth-child(2) { display: flex; align-items: center; gap: 5px; }
-.cv-footer-bottom > span:last-child { font-size: 7px; letter-spacing: 1.5px; }
 /* Keep Mapbox's required attribution and controls readable within the dark app. */
 .cv-footer .mapboxgl-ctrl button { background-color: #fff; }
 .cv-footer .mapboxgl-ctrl-attrib { color: #333; font-size: 10px; }

@@ -88,9 +88,12 @@ try {
     const paid=await call(`/api/bookings/${booking.id}`,{cookie:owner.cookie});
     check(paid.body.booking.status === "paid" && paid.body.booking.payment === null,"owner polling observes paid status and removes payable QR");
     check((await call("/api/payments/sepay/webhook",{method:"POST",body:settled.body,headers:settled.headers})).body.outcome === "paid","webhook retry acknowledges the same transaction");
-    check((await call(`/api/bookings/${booking.id}`,{method:"PATCH",cookie:owner.cookie,body:{action:"cancel"}})).body.booking.refundStatus === "pending","paid bank cancellation enters the manual refund queue");
+    check((await call(`/api/bookings/${booking.id}`,{method:"PATCH",cookie:staff,body:{action:"cancel"}})).status === 403,"staff cannot cancel a paid customer booking");
+    check((await call(`/api/bookings/${booking.id}`,{method:"PATCH",cookie:owner.cookie,body:{action:"cancel"}})).body.booking.refundStatus === "none","paid bank cancellation returns vouchers instead of money");
+    const returned = await call('/api/membership/me',{cookie:owner.cookie});
+    check(returned.body.membership.redemptions.filter(item=>item.id.startsWith(`refund:${booking.id}:`)&&item.status==='available').length===1,"bank cancellation grants one reusable ticket for the cancelled seat");
     check((await call("/api/admin/payments",{method:"POST",cookie:owner.cookie,body:{action:"record_refund",bookingId:booking.id,reason:"QA refund acknowledgement"}})).status === 403,"customer cannot acknowledge a refund");
-    check((await call("/api/admin/payments",{method:"POST",cookie:admin,body:{action:"record_refund",bookingId:booking.id,reason:"QA isolated bank refund reference only"}})).status === 200,"admin can record an already-completed manual refund");
+    check((await call("/api/admin/payments",{method:"POST",cookie:admin,body:{action:"record_refund",bookingId:booking.id,reason:"QA isolated bank refund reference only"}})).status === 409,"admin cannot mark a voucher-refunded order as a bank refund");
     const second=await order("A2");const pending=second.body.booking;
     execute(`UPDATE bookings SET expires_at=${Date.now()-1000} WHERE id=${quote(pending.id)}`);
     check((await call(`/api/bookings/${pending.id}`,{cookie:owner.cookie})).body.booking.status === "expired","polling expires an unpaid order");
@@ -109,6 +112,7 @@ try {
         DELETE FROM email_outbox WHERE user_id IN (${ids(fixture.users)}) OR source_id IN (${ids(fixture.bookings)});
         DELETE FROM membership_transactions WHERE booking_id IN (${ids(fixture.bookings)});
         DELETE FROM bookings WHERE id IN (${ids(fixture.bookings)});
+        DELETE FROM membership_rewards WHERE user_id IN (${ids(fixture.users)}) AND id LIKE 'refund:%';
         DELETE FROM seat_hold_sessions WHERE showtime_id IN (${ids(fixture.showtimes)});
         DELETE FROM showtimes WHERE id IN (${ids(fixture.showtimes)});
         DELETE FROM rooms WHERE id IN (${ids(fixture.rooms)});

@@ -129,7 +129,7 @@ check(sqlite.prepare("SELECT payment_provider FROM bookings WHERE id=?").get(six
 const email = JSON.parse(sqlite.prepare("SELECT data FROM email_outbox WHERE id=?").get(`booking:${sixth.id}`).data);
 check(!notificationContent('booking',email).text.includes('giả lập'), "paid ticket email describes actual settlement");
 const cancellation = JSON.parse(sqlite.prepare("SELECT data FROM email_outbox WHERE id=?").get(`cancel:${sixth.id}`).data);
-check(notificationContent('cancel',cancellation).text.includes('đối soát'), "cancellation email explains manual bank refund processing");
+check(notificationContent('cancel',cancellation).text.includes('hoàn bằng vé'), "cancellation email explains ticket-credit compensation");
 sqlite.prepare("UPDATE bookings SET refund_status='refunded' WHERE id=?").run(sixth.id);
 check(sqlite.prepare("SELECT id FROM audit_logs WHERE entity_id=? AND after_json LIKE '%refunded%' LIMIT 1").get(sixth.id), "refund acknowledgement is audited");
 console.log(`PASS ${checks} SePay checks against all real database migrations.`);

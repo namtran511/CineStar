@@ -18,7 +18,12 @@ try{
     const admin=await call('/api/auth/login','POST',{email:'admin@cineverse.vn',password:'Demo@123'});assert.equal(admin.status,200);
     const status=await call('/api/admin/email','GET',undefined,admin.cookie);
     assert.equal(status.body.configured,false,'Run API tests without email credentials; this suite never sends real mail.');
-    const register=await call('/api/auth/register','POST',{name:'Email QA',email:`email-otp-${stamp}@cineverse.test`,password:'EmailTest@123',birthDate:'2000-01-15',role:'admin'});
+    const registration={name:'Email QA',email:`email-otp-${stamp}@cineverse.test`,password:'EmailTest@123',birthDate:'2000-01-15',role:'admin'};
+    for (const acceptedPolicies of [undefined,false,'true']) {
+        const rejected=await call('/api/auth/register','POST',{...registration,acceptedPolicies});
+        check(rejected.status===400&&!rejected.cookie,'registration requires explicit policy acceptance before requesting OTP');
+    }
+    const register=await call('/api/auth/register','POST',{...registration,acceptedPolicies:true});
     check(register.status===503&&!register.cookie&&!register.body.user,'registration cannot bypass OTP when email is unconfigured');
     const customer=await createQaCustomer(base,{name:'Email API QA',email:`email-api-${stamp}@cineverse.test`,password:'EmailTest@123',birthDate:'2000-01-15'});fixture.user=customer.body.user.id;
     const staff=await call('/api/auth/login','POST',{email:'staff@cineverse.vn',password:'Demo@123'});

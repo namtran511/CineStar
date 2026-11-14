@@ -93,7 +93,7 @@ Trong Live, nút Gửi thử trên SePay thường gửi ID giao dịch mẫu b�
 - Chỉ khớp **một giao dịch tiền vào đúng bằng tổng đơn**. Chuyển thiếu/thừa, chia nhiều lần, sai mã, sai ngân hàng hoặc tài khoản: cần đối soát thủ công.
 - Tiền đến sau khi hết hạn/hủy, hoặc chuyển thêm cho đơn đã trả: lưu để đối soát; không tự lấy lại ghế có thể đã bán cho người khác.
 - Đơn chờ hết hạn tự trả ghế và quyền lợi thành viên đúng một lần. Kiểm tra hạn khi đọc đơn, xem/chọn ghế, nhận webhook và cron mỗi 5 phút.
-- Hủy vé đã trả tiền mở lại ghế theo quy định, hoàn điểm/ưu đãi và đánh dấu `refund_status=pending`. Rạp hoàn tiền bằng ngân hàng sau khi đối chiếu; nút Ghi nhận đã hoàn tiền chỉ ghi nhật ký sau thao tác đó. Tích hợp này không có chức năng tự chuyển tiền ra.
+- Hủy vé đã trả tiền mở lại ghế theo quy định, hoàn điểm/ưu đãi và cấp một vé miễn phí cho mỗi ghế đã hủy (vé thưởng đã dùng được khôi phục và tính trong số vé đó). Đơn SePay mới hủy theo chính sách này có `refund_status=none`; không hoàn bằng tiền. Danh sách `refund_status=pending` của các đơn đã hủy trước khi áp dụng chính sách vẫn cần được rạp đối soát và xử lý. Nút Ghi nhận đã hoàn tiền chỉ ghi nhật ký sau khi rạp thực hiện giao dịch hoàn riêng. Tích hợp không có chức năng tự chuyển tiền ra.
 - Khi vận hành, đối soát giao dịch từ dashboard SePay/ngân hàng định kỳ để tìm giao dịch webhook bị bỏ lỡ; chưa có tác vụ tự gọi API ngân hàng để bù giao dịch thiếu.
 
 ## Tài liệu chính thức

@@ -9,8 +9,10 @@ export const POST = api(async (request) => {
     const email = stringField(body.email, "Email", 3, 254).toLowerCase();
     const password = stringField(body.password, "Mật khẩu", 8, 128);
     const birthDate = checkedBirthDate(body.birthDate);
+    if (body.acceptedPolicies !== true)
+        throw new HttpError(400, "Bạn cần đồng ý với các chính sách trước khi đăng ký.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
         throw new HttpError(400, "Email không hợp lệ.");
-    const challenge = await requestEmailCode(await getDb(),getEnv(),{purpose:'register',name,email,passwordHash:await hashPassword(password),birthDate,marketing:body.marketing===true,birthday:body.birthday===true},emailRequestOptions(request));
+    const challenge = await requestEmailCode(await getDb(),getEnv(),{purpose:'register',name,email,passwordHash:await hashPassword(password),birthDate,marketing:true,birthday:true},emailRequestOptions(request));
     return Response.json({verificationRequired:true,...challenge},{status:202});
 });
